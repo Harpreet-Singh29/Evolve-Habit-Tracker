@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Evolve
 
 A local-first habit tracker. One **Android APK** plus a **browser/PWA**, both
@@ -219,3 +220,6 @@ in the schema so no migration will be needed later.
 
 Public repository, owner `Harpreet-Singh29`. Full plan, risks, phases and
 changelog are recorded in the local master plan file.
+=======
+# Evolve-Habit-Tracker
+>>>>>>> 6237fc4b3b6e4c32184d25668aba48d7f0a539ac
