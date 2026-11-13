@@ -62,6 +62,15 @@ export function HabitForm({
     onSave({ ...draft, name });
   };
 
+  /** Shared day-chip toggle for both "Days" and "x / week" schedules. */
+  const toggleDay = (n: number) => {
+    const s = draft.schedule;
+    if (s.type !== 'weekdays' && s.type !== 'timesPerWeek') return;
+    const days = s.days ?? [];
+    const next = days.includes(n) ? days.filter((d) => d !== n) : [...days, n];
+    set('schedule', { ...s, days: next });
+  };
+
   return (
     <Modal open={open} onClose={onClose} title={initial ? 'Edit habit' : 'New habit'}>
       <div className="flex flex-col gap-5">
@@ -131,20 +140,17 @@ export function HabitForm({
             ))}
           </div>
 
-          {draft.schedule.type === 'weekdays' && (
+          {(draft.schedule.type === 'weekdays' || draft.schedule.type === 'timesPerWeek') && (
             <div className="mt-3 flex justify-between">
               {DAYS.map(({ n, l }) => {
-                const active = draft.schedule.type === 'weekdays' && draft.schedule.days.includes(n);
+                const s = draft.schedule;
+                // TypeScript narrowing: both types have `days` when we're in this block
+                const days = 'days' in s ? (s.days ?? []) : [];
+                const active = days.includes(n);
                 return (
                   <button
                     key={n}
-                    onClick={() => {
-                      if (draft.schedule.type !== 'weekdays') return;
-                      const days = active
-                        ? draft.schedule.days.filter((d) => d !== n)
-                        : [...draft.schedule.days, n];
-                      set('schedule', { type: 'weekdays', days });
-                    }}
+                    onClick={() => toggleDay(n)}
                     className="tap grid h-11 w-11 place-items-center rounded-xl text-sm font-semibold"
                     style={{ background: active ? 'var(--brand)' : 'var(--surface-2)', color: active ? '#fff' : undefined }}
                   >
@@ -155,20 +161,23 @@ export function HabitForm({
             </div>
           )}
 
-          {draft.schedule.type === 'timesPerWeek' && (
-            <div className="mt-3 flex items-center gap-3">
-              <span className="muted text-sm">Target per week</span>
-              <input
-                type="range"
-                min={1}
-                max={7}
-                value={draft.schedule.target}
-                onChange={(e) => set('schedule', { type: 'timesPerWeek', target: Number(e.target.value) })}
-                className="flex-1"
-              />
-              <span className="w-6 text-center font-semibold">{draft.schedule.target}</span>
-            </div>
-          )}
+          {draft.schedule.type === 'timesPerWeek' && (() => {
+              const tpw = draft.schedule;
+              return (
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="muted text-sm">Target per week</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={7}
+                    value={tpw.target}
+                    onChange={(e) => set('schedule', { type: 'timesPerWeek', target: Number(e.target.value), days: tpw.days })}
+                    className="flex-1"
+                  />
+                  <span className="w-6 text-center font-semibold">{tpw.target}</span>
+                </div>
+              );
+            })()}
         </div>
 
         <div className="flex gap-2 pt-1">

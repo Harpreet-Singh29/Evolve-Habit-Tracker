@@ -11,8 +11,12 @@ export function isScheduledOn(habit: Habit, date: string): boolean {
   const s: Schedule = habit.schedule;
   if (s.type === 'daily') return true;
   if (s.type === 'weekdays') return s.days.includes(weekdayOf(date));
-  // timesPerWeek is a weekly target, not a per-day requirement: it is
-  // "scheduled" every day (the target is checked at week level).
+  // timesPerWeek with an explicit day list: scheduled only on the chosen days.
+  if (s.type === 'timesPerWeek' && Array.isArray(s.days) && s.days.length > 0) {
+    return s.days.includes(weekdayOf(date));
+  }
+  // timesPerWeek without day selection: the target is a weekly count, so the
+  // habit stays visible every day (any of the target completions counts).
   return true;
 }
 

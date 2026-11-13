@@ -70,8 +70,24 @@ describe('isScheduledOn', () => {
     expect(isScheduledOn(h, '2024-03-13')).toBe(true); // Wed
   });
 
-  it('timesPerWeek is scheduled every day (target checked weekly)', () => {
+  it('timesPerWeek without day list is scheduled every day (target checked weekly)', () => {
     const h = habit({ schedule: { type: 'timesPerWeek', target: 3 } });
+    expect(isScheduledOn(h, '2024-03-12')).toBe(true);
+  });
+
+  it('timesPerWeek with explicit days only scheduled on those days', () => {
+    const h = habit({ schedule: { type: 'timesPerWeek', target: 3, days: [1, 3, 5] } }); // Mon/Wed/Fri
+    expect(isScheduledOn(h, '2024-03-11')).toBe(true); // Mon
+    expect(isScheduledOn(h, '2024-03-12')).toBe(false); // Tue
+    expect(isScheduledOn(h, '2024-03-13')).toBe(true); // Wed
+    expect(isScheduledOn(h, '2024-03-14')).toBe(false); // Thu
+    expect(isScheduledOn(h, '2024-03-15')).toBe(true); // Fri
+    expect(isScheduledOn(h, '2024-03-16')).toBe(false); // Sat
+    expect(isScheduledOn(h, '2024-03-17')).toBe(false); // Sun
+  });
+
+  it('timesPerWeek with empty days array behaves like no day list (every day)', () => {
+    const h = habit({ schedule: { type: 'timesPerWeek', target: 3, days: [] } });
     expect(isScheduledOn(h, '2024-03-12')).toBe(true);
   });
 });

@@ -3,7 +3,7 @@
 export type Schedule =
   | { type: 'daily' }
   | { type: 'weekdays'; days: number[] } // 0 = Sunday .. 6 = Saturday (local)
-  | { type: 'timesPerWeek'; target: number }; // target: 1..7
+  | { type: 'timesPerWeek'; target: number; days?: number[] }; // target: 1..7; days optional
 
 export interface Habit {
   id: string;
