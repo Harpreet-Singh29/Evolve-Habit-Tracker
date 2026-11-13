@@ -1,0 +1,181 @@
+# =============================================================================
+# Evolve — root .gitignore
+# The repo is PUBLIC. NEVER commit signing keys, credentials, tokens, local
+# env files, private notes, or data dumps.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Dependencies
+# -----------------------------------------------------------------------------
+node_modules/
+.pnp
+.pnp.js
+jspm_packages/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# -----------------------------------------------------------------------------
+# Build output / caches
+# -----------------------------------------------------------------------------
+dist/
+.vercel/
+.vite/
+dev-dist/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.turbo/
+.cache/
+.parcel-cache/
+
+# -----------------------------------------------------------------------------
+# Capacitor / Android build artifacts
+# NOTE: do NOT ignore *.properties globally — gradle.properties and
+# gradle-wrapper.properties MUST be committed for Gradle to build. Only the
+# LOCAL sdk path (local.properties) and signing-property files are ignored.
+# -----------------------------------------------------------------------------
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/.idea/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.hprof
+
+# LIVE WebView APK is a THIN shell: `cap sync` re-copies the web bundle here,
+# but server.url makes the WebView load from Vercel instead. Never commit/ship
+# this bundle (keep assets/capacitor.config.json + capacitor.plugins.json).
+android/app/src/main/assets/public/
+
+# -----------------------------------------------------------------------------
+# SIGNING MATERIAL / ANDROID SIGNING — NEVER commit (public repo)
+# The release keystore is decoded from GitHub Secrets in release.yml; it is
+# created at CI time and must never exist in git history.
+# -----------------------------------------------------------------------------
+*.keystore
+*.jks
+release.keystore
+key.properties
+keystore.properties
+android/app/release.keystore
+*.pepk
+*.pem
+*.p12
+*.pfx
+*.p8
+*.der
+# Private keys. NOTE: this does NOT match capacitor.config.json /
+# capacitor.plugins.json / gradle.properties (the build needs those committed).
+*.key
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.ppk
+*.kdbx
+*.asc
+*.gpg
+
+# -----------------------------------------------------------------------------
+# SECRETS / CREDENTIALS / TOKENS — never commit
+# -----------------------------------------------------------------------------
+# Environment files (keep the committed example as a template)
+.env
+.env.*
+!.env.example
+.envrc
+# Package-manager / tool auth
+.npmrc
+.yarnrc
+.yarnrc.yml
+.netrc
+_netrc
+.htpasswd
+# Cloud / service credentials
+google-services.json
+GoogleService-Info.plist
+service-account*.json
+*service-account*.json
+credentials.json
+credentials.yml
+credentials.yaml
+secrets.json
+secrets.yml
+secrets.yaml
+secrets.toml
+secrets.ini
+secrets.txt
+*secrets*.json
+*secrets*.yml
+*secrets*.yaml
+*credentials*.json
+# Common token / auth / private files
+*.token
+*token*.json
+*token*.txt
+*secret*.txt
+*password*.txt
+auth.json
+auth.yml
+.auth
+.credentials/
+.firebase/
+.vercel/
+# SSH / cloud CLI state
+.ssh/
+.aws/
+.gcloud/
+.kube/
+.docker/config.json
+
+# -----------------------------------------------------------------------------
+# LOCAL NOTES / PLANNING — private planning files stay LOCAL to this machine
+# only and are never pushed to the PUBLIC repo. The specific filenames we keep
+# local-only live in .git/info/exclude (per-clone, not committed). Add any new
+# private note there too. The patterns below catch common personal-note names.
+# -----------------------------------------------------------------------------
+*.private.md
+*.local.md
+notes/
+private/
+
+# -----------------------------------------------------------------------------
+# DATA DUMPS / BACKUPS — a habit-data export or DB must never reach the repo
+# -----------------------------------------------------------------------------
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.dump
+*.bak
+*.backup
+*.old
+*.orig
+*~
+
+# -----------------------------------------------------------------------------
+# Editor / OS
+# -----------------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# Logs (may contain secrets / tokens in URLs)
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

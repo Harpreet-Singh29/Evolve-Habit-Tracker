@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand colors for the AppCompat base theme referenced by styles.xml.
+         These are native chrome colors only; the app UI itself is rendered by
+         the WebView and uses CSS variables (see src/index.css). -->
+    <color name="colorPrimary">#6366f1</color>
+    <color name="colorPrimaryDark">#3730a3</color>
+    <color name="colorAccent">#818cf8</color>
+</resources>

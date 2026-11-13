@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Evolve</string>
+    <string name="title_activity_main">Evolve</string>
+    <string name="package_name">com.harpreetsingh29.habittracker</string>
+    <string name="custom_url_scheme">com.harpreetsingh29.habittracker</string>
+</resources>

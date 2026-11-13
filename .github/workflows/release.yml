@@ -1,0 +1,79 @@
+name: Release APK
+
+# The APK is a thin native shell with NO bundled web assets (server.url loads
+# the app from Vercel), but the Gradle build still needs the Capacitor native
+# libraries: android/capacitor.settings.gradle resolves :capacitor-android and
+# :capacitor-app from ../node_modules/@capacitor/*, and capacitor.build.gradle
+# applies ../capacitor-cordova-android-plugins/cordova.variables.gradle.
+# Therefore npm ci IS required here (no WEB build/copy, just node_modules).
+# Content updates reach the app automatically via the Vercel origin; a new APK
+# is only needed when the native shell, plugins, appId or capacitor.config
+# (including the LOCKED origin) changes. Any such change requires a new tagged
+# APK release so installed devices fetch the updated bundle.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Gradle resolves the Capacitor libraries from node_modules (see the
+      # header comment). No vite/web build is needed — only the native libs.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Capacitor native libraries
+        run: npm ci
+
+      - name: Decode release keystore
+        run: echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+      - name: Build signed release APK
+        working-directory: android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Normalize to the stable, case-sensitive asset name
+        run: cp android/app/build/outputs/apk/release/*.apk Evolve.apk
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Evolve.apk
+          name: Evolve ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            ## Evolve ${{ github.ref_name }}
+
+            Install `Evolve.apk` on Android (enable "Install from unknown sources").
+
+            - The app loads the latest version from
+              https://evolve-habit-tracker-two.vercel.app on every launch, so
+              day-to-day updates do NOT require reinstalling this APK.
+            - Local-only data: no account, no sync, no analytics. Export/Import
+              JSON in Settings to move data between the browser and the app.
+            - Browser users: open the site above and install it as a PWA.
+
+            Stable download URL:
+            https://github.com/Harpreet-Singh29/Evolve-Habit-Tracker/releases/latest/download/Evolve.apk

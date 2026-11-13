@@ -1,0 +1,15 @@
+{
+	"appId": "com.harpreetsingh29.habittracker",
+	"appName": "Evolve",
+	"webDir": "dist",
+	"server": {
+		"url": "https://evolve-habit-tracker-two.vercel.app",
+		"cleartext": false,
+		"androidScheme": "https"
+	},
+	"android": {
+		"allowMixedContent": false,
+		"webContentsDebuggingEnabled": false
+	},
+	"plugins": {}
+}

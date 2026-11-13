@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Web build (also validates the PWA service worker)
+        run: npm run build
+
+      - name: Verify no secrets or signing material are committed
+        # The repo is PUBLIC. The root .gitignore is the first line of defence;
+        # this guard is the backstop in case a file is ever force-added
+        # (git add -f) or the ignore list regresses.
+        run: |
+          set -e
+          bad=$(git ls-files | grep -Ei \
+            '\.(keystore|jks|p12|pfx|p8|pem|key|kdbx|asc|gpg)$|(^|/)\.env($|\.)|\.npmrc$|\.netrc$|_netrc$|google-services\.json$|service-account.*\.json$|(^|/)(credentials|secrets)\.(json|ya?ml|toml|ini|txt)$|id_rsa|id_ed25519|(^|/)(release\.keystore|key\.properties|keystore\.properties)$' \
+            | grep -Eiv '\.env\.example$' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Sensitive or signing material must never be committed (public repo)."
+            echo "$bad"
+            exit 1
+          fi
+          echo "OK: no secrets or signing keys in the repository."
