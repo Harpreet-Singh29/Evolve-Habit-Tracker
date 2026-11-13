@@ -55,11 +55,11 @@ export function HabitForm({
   const set = <K extends keyof HabitDraft>(k: K, v: HabitDraft[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));
 
-  const submit = () => {
-    const name = draft.name.trim();
-    if (!name) return;
-    if (draft.schedule.type === 'weekdays' && draft.schedule.days.length === 0) return;
-    onSave({ ...draft, name });
+  /** Check if timesPerWeek has more selected days than target. */
+  const exceedsTarget = (): boolean => {
+    const s = draft.schedule;
+    if (s.type !== 'timesPerWeek' || !s.days || s.days.length === 0) return false;
+    return s.days.length > s.target;
   };
 
   /** Shared day-chip toggle for both "Days" and "x / week" schedules. */
@@ -68,7 +68,19 @@ export function HabitForm({
     if (s.type !== 'weekdays' && s.type !== 'timesPerWeek') return;
     const days = s.days ?? [];
     const next = days.includes(n) ? days.filter((d) => d !== n) : [...days, n];
+    // Prevent adding a day that would exceed the target for timesPerWeek
+    if (s.type === 'timesPerWeek' && next.length > s.target && !days.includes(n)) {
+      return; // silently ignore the click
+    }
     set('schedule', { ...s, days: next });
+  };
+
+  const submit = () => {
+    const name = draft.name.trim();
+    if (!name) return;
+    if (draft.schedule.type === 'weekdays' && draft.schedule.days.length === 0) return;
+    if (exceedsTarget()) return; // block submit if days > target
+    onSave({ ...draft, name });
   };
 
   return (
@@ -147,12 +159,16 @@ export function HabitForm({
                 // TypeScript narrowing: both types have `days` when we're in this block
                 const days = 'days' in s ? (s.days ?? []) : [];
                 const active = days.includes(n);
+                const isExcess = s.type === 'timesPerWeek' && s.days && days.length > s.target && active;
                 return (
                   <button
                     key={n}
                     onClick={() => toggleDay(n)}
                     className="tap grid h-11 w-11 place-items-center rounded-xl text-sm font-semibold"
-                    style={{ background: active ? 'var(--brand)' : 'var(--surface-2)', color: active ? '#fff' : undefined }}
+                    style={{
+                      background: isExcess ? '#ef4444' : active ? 'var(--brand)' : 'var(--surface-2)',
+                      color: active ? '#fff' : undefined,
+                    }}
                   >
                     {l}
                   </button>
@@ -182,7 +198,7 @@ export function HabitForm({
 
         <div className="flex gap-2 pt-1">
           <button className="btn btn-ghost flex-1" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary flex-1" onClick={submit} disabled={!draft.name.trim()}>
+          <button className="btn btn-primary flex-1" onClick={submit} disabled={!draft.name.trim() || exceedsTarget()}>
             {initial ? 'Save changes' : 'Add habit'}
           </button>
         </div>
