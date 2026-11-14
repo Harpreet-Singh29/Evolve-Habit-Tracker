@@ -68,12 +68,6 @@ export function Layout({
           <div className="flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg text-base font-bold text-white" style={{ background: 'var(--brand)' }}>E</div>
             <span className="text-lg font-bold">Evolve</span>
-            {/* Live-update acceptance marker (temporary): a web-only content change
-                pushed to main must appear in the installed APK on next launch,
-                with NO reinstall and NO new tag. Remove after the user confirms. */}
-            <span className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" style={{ background: 'var(--brand)' }}>
-              LIVE UPDATE ✓
-            </span>
           </div>
           <button onClick={onToggleTheme} className="tap btn-ghost !px-2" aria-label="Toggle theme">
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
