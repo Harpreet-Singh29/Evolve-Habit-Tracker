@@ -3,7 +3,7 @@ import type { Habit, Schedule } from '../../types';
 import { Modal } from '../../components/ui';
 
 const ICONS = ['✅', '🏃', '📚', '💧', '🧘', '💪', '🌱', '🎨', '🎵', '😴', '🥗', '✍️', '🚭', '🧹', '☀️', '🦷'];
-const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#14b8a6'];
+const COLORS = ['#1a1d21', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#14b8a6'];
 const DAYS = [
   { n: 1, l: 'M' }, { n: 2, l: 'T' }, { n: 3, l: 'W' }, { n: 4, l: 'T' },
   { n: 5, l: 'F' }, { n: 6, l: 'S' }, { n: 0, l: 'S' },
@@ -20,7 +20,7 @@ export interface HabitDraft {
 const emptyDraft = (): HabitDraft => ({
   name: '',
   icon: '✅',
-  color: '#6366f1',
+  color: '#1a1d21',
   schedule: { type: 'daily' },
 });
 
@@ -123,7 +123,7 @@ export function HabitForm({
                 style={{
                   background: draft.icon === ic ? 'var(--brand)' : undefined,
                   borderRadius: 'var(--r-lg)',
-                  color: draft.icon === ic ? '#fff' : undefined,
+                  color: draft.icon === ic ? 'var(--brand-text)' : undefined,
                   borderColor: draft.icon === ic ? 'transparent' : undefined,
                 }}
                 aria-label={`Icon ${ic}`}
@@ -162,8 +162,8 @@ export function HabitForm({
                         : { type: 'timesPerWeek', target: 3 },
                   )
                 }
-                className={`btn flex-1 !px-2 text-sm ${draft.schedule.type === t ? 'text-white' : 'btn-ghost muted'}`}
-                style={draft.schedule.type === t ? { background: 'var(--brand)' } : undefined}
+                className={`btn flex-1 !px-2 text-sm ${draft.schedule.type === t ? '' : 'btn-ghost muted'}`}
+                style={draft.schedule.type === t ? { background: 'var(--brand)', color: 'var(--brand-text)' } : undefined}
               >
                 {t === 'daily' ? 'Every day' : t === 'weekdays' ? 'Days' : 'x / week'}
               </button>
@@ -185,7 +185,7 @@ export function HabitForm({
                     className="tap grid h-11 w-11 place-items-center text-sm font-semibold control transition"
                     style={{
                       background: isExcess ? '#ef4444' : active ? 'var(--brand)' : undefined,
-                      color: active || isExcess ? '#fff' : undefined,
+                      color: active || isExcess ? 'var(--brand-text)' : undefined,
                       borderColor: active || isExcess ? 'transparent' : undefined,
                       borderRadius: 'var(--r-lg)',
                     }}

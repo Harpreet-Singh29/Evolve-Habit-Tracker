@@ -28,7 +28,7 @@ export function Layout({
       {/* Desktop sidebar (>=1024px) */}
       <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:shrink-0 surface lg:border-r lg:border-b-0" style={{ background: 'var(--surface)' }}>
         <div className="flex items-center gap-3 px-5 py-6">
-          <div className="grid h-10 w-10 place-items-center text-xl font-bold text-white" style={{ background: 'var(--brand)', borderRadius: 'var(--r-lg)' }}>E</div>
+          <div className="grid h-10 w-10 place-items-center text-xl font-bold" style={{ background: 'var(--brand)', color: 'var(--brand-text)', borderRadius: 'var(--r-lg)' }}>E</div>
           <div>
             <div className="text-lg font-bold leading-tight">Evolve</div>
             <div className="muted text-xs">Habit tracker</div>
@@ -39,8 +39,8 @@ export function Layout({
             <button
               key={t.id}
               onClick={() => onTab(t.id)}
-              className={`btn justify-start !px-3 ${tab === t.id ? 'text-white' : 'muted'}`}
-              style={tab === t.id ? { background: 'var(--brand)' } : undefined}
+              className={`btn justify-start !px-3 ${tab === t.id ? '' : 'muted'}`}
+              style={tab === t.id ? { background: 'var(--brand)', color: 'var(--brand-text)' } : undefined}
             >
               <Icon name={t.icon} />
               <span>{t.label}</span>
@@ -66,7 +66,7 @@ export function Layout({
         {/* Mobile header */}
         <header className="flex items-center justify-between px-4 py-4 lg:hidden">
           <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center text-base font-bold text-white" style={{ background: 'var(--brand)', borderRadius: 'var(--r-md)' }}>E</div>
+            <div className="grid h-8 w-8 place-items-center text-base font-bold" style={{ background: 'var(--brand)', color: 'var(--brand-text)', borderRadius: 'var(--r-md)' }}>E</div>
             <span className="text-lg font-bold">Evolve</span>
           </div>
           <button onClick={onToggleTheme} className="tap btn-ghost !px-2" aria-label="Toggle theme">

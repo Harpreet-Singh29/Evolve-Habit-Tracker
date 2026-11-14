@@ -13,8 +13,10 @@
   --text: #f1f5f9;
   --muted: #94a3b8;
   --border: #2d3a4f;
-  --brand: #6366f1;
-  --brand-strong: #4f46e5;
+  --brand: #ffffff;          /* primary accent (dark mode = white) */
+  --brand-strong: #e2e8f0;   /* pressed state */
+  --brand-text: #0f172a;     /* text on brand buttons (dark) */
+  --brand-focus: #94a3b8;    /* focus ring (dark) */
 
   /* Neumorphic shadows (dark) */
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.35), 0 1px 1px rgba(0,0,0,0.25);
@@ -42,8 +44,10 @@ html.light {
   --text: #1a1d21;
   --muted: #6b7280;
   --border: #d1d5db;
-  --brand: #6366f1;
-  --brand-strong: #4338ca;
+  --brand: #1a1d21;          /* primary accent (light mode = near-black) */
+  --brand-strong: #374151;   /* pressed state */
+  --brand-text: #ffffff;     /* text on brand buttons (light) */
+  --brand-focus: #9ca3af;    /* focus ring (light) */
 
   /* Neumorphic shadows (light) */
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.08), 0 1px 1px rgba(0,0,0,0.05);
@@ -83,7 +87,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 2px solid var(--brand-focus);
   outline-offset: 2px;
 }
 
@@ -122,8 +126,9 @@ textarea {
     box-shadow: var(--shadow-sm);
   }
   .btn-primary {
-    @apply btn text-white;
+    @apply btn;
     background: var(--brand);
+    color: var(--brand-text);
     border-color: transparent;
     box-shadow: var(--shadow-sm);
   }
@@ -148,8 +153,8 @@ textarea {
     box-shadow: var(--shadow-inset);
   }
   .input:focus {
-    border-color: var(--brand);
-    box-shadow: var(--shadow-inset), 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent);
+    border-color: var(--brand-focus);
+    box-shadow: var(--shadow-inset), 0 0 0 3px color-mix(in srgb, var(--brand-focus) 25%, transparent);
   }
   .tap {
     min-height: 44px;
