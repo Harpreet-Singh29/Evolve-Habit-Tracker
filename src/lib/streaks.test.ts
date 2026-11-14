@@ -90,6 +90,39 @@ describe('isScheduledOn', () => {
     const h = habit({ schedule: { type: 'timesPerWeek', target: 3, days: [] } });
     expect(isScheduledOn(h, '2024-03-12')).toBe(true);
   });
+
+  it('timesPerWeek with all 7 days is scheduled every day of the week', () => {
+    const h = habit({ schedule: { type: 'timesPerWeek', target: 3, days: [0, 1, 2, 3, 4, 5, 6] } });
+    // Mon 2024-03-11 .. Sun 2024-03-17
+    for (const d of ['2024-03-11', '2024-03-12', '2024-03-13', '2024-03-14', '2024-03-15', '2024-03-16', '2024-03-17']) {
+      expect(isScheduledOn(h, d)).toBe(true);
+    }
+  });
+
+  it('timesPerWeek with day selection is hidden from TODAY on non-chosen days but weekly target still counts', () => {
+    const h = habit({ createdAt: '2024-03-01', schedule: { type: 'timesPerWeek', target: 3, days: [1, 3, 5] } }); // Mon/Wed/Fri
+    // Tue is not a chosen day -> the habit is not scheduled (hidden from TODAY).
+    expect(isScheduledOn(h, '2024-03-12')).toBe(false);
+    expect(isScheduledOn(h, '2024-03-11')).toBe(true);
+    // Weekly progress is still a distinct-completion count across the ISO week,
+    // independent of which days are selected.
+    const e = doneOn(['2024-03-11', '2024-03-13', '2024-03-15'], h);
+    expect(weeklyProgress(h, e, '2024-03-13')).toBe(3);
+  });
+
+  it('timesPerWeek with day selection survives a week boundary (Monday-based)', () => {
+    const h = habit({ schedule: { type: 'timesPerWeek', target: 3, days: [1] } }); // Mondays only
+    expect(isScheduledOn(h, '2024-03-11')).toBe(true); // Mon, start of week
+    expect(isScheduledOn(h, '2024-03-10')).toBe(false); // Sun, previous week
+    expect(isScheduledOn(h, '2024-03-18')).toBe(true); // Mon, next week
+  });
+
+  it('explicit-day timesPerWeek streak logic matches weekdays (unscheduled days do not break it)', () => {
+    const h = habit({ createdAt: '2024-03-01', schedule: { type: 'timesPerWeek', target: 3, days: [1, 2, 3, 4, 5] } });
+    // Fri Mar 8, Mon Mar 11 done; weekend not scheduled -> streak is 2.
+    const e = doneOn(['2024-03-08', '2024-03-11'], h);
+    expect(currentStreak(h, e, '2024-03-11')).toBe(2);
+  });
 });
 
 describe('currentStreak', () => {

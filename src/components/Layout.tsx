@@ -55,6 +55,9 @@ export function Layout({
           <p className="muted mt-3 px-2 text-[11px] leading-relaxed">
             Local-only · no account · no sync
           </p>
+          <p className="muted mt-1 px-2 text-[11px] leading-relaxed">
+            Keys 1–4 switch tabs · N new habit · Esc closes
+          </p>
         </div>
       </aside>
 

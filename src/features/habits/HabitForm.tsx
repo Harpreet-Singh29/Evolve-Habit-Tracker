@@ -55,11 +55,24 @@ export function HabitForm({
   const set = <K extends keyof HabitDraft>(k: K, v: HabitDraft[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));
 
-  /** Check if timesPerWeek has more selected days than target. */
+  /** Check if timesPerWeek has more selected days than target (blocks save). */
   const exceedsTarget = (): boolean => {
     const s = draft.schedule;
     if (s.type !== 'timesPerWeek' || !s.days || s.days.length === 0) return false;
     return s.days.length > s.target;
+  };
+
+  /**
+   * Guardrail from the x/week design: when the weekly target is higher than the
+   * number of selected days, the goal cannot be reached in one week (the habit
+   * is only shown on those days). Warn, but still allow saving — the target is
+   * a goal, not a hard constraint.
+   */
+  const targetHint = (): string | null => {
+    const s = draft.schedule;
+    if (s.type !== 'timesPerWeek' || !s.days || s.days.length === 0) return null;
+    if (s.target <= s.days.length) return null;
+    return `Target ${s.target} exceeds the ${s.days.length} selected ${s.days.length === 1 ? 'day' : 'days'} — the goal can't be reached in one week.`;
   };
 
   /** Shared day-chip toggle for both "Days" and "x / week" schedules. */
@@ -179,19 +192,27 @@ export function HabitForm({
 
           {draft.schedule.type === 'timesPerWeek' && (() => {
               const tpw = draft.schedule;
+              const hint = targetHint();
               return (
-                <div className="mt-3 flex items-center gap-3">
-                  <span className="muted text-sm">Target per week</span>
-                  <input
-                    type="range"
-                    min={1}
-                    max={7}
-                    value={tpw.target}
-                    onChange={(e) => set('schedule', { type: 'timesPerWeek', target: Number(e.target.value), days: tpw.days })}
-                    className="flex-1"
-                  />
-                  <span className="w-6 text-center font-semibold">{tpw.target}</span>
-                </div>
+                <>
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="muted text-sm">Target per week</span>
+                    <input
+                      type="range"
+                      min={1}
+                      max={7}
+                      value={tpw.target}
+                      onChange={(e) => set('schedule', { type: 'timesPerWeek', target: Number(e.target.value), days: tpw.days })}
+                      className="flex-1"
+                    />
+                    <span className="w-6 text-center font-semibold">{tpw.target}</span>
+                  </div>
+                  {hint && (
+                    <p className="mt-2 text-xs" style={{ color: '#f59e0b' }} role="status">
+                      {hint}
+                    </p>
+                  )}
+                </>
               );
             })()}
         </div>

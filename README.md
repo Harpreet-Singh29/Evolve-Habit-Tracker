@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Evolve
 
 A local-first habit tracker. One **Android APK** plus a **browser/PWA**, both
@@ -128,8 +127,9 @@ npm run cap:open     # open android/ in Android Studio
 
 ### First-time setup (one-off, done by the repo owner)
 
-1. Delete leftover Vercel projects from earlier domain attempts — keep **only**
-   `evolve-habit-tracker-two` connected to the repo (Production Branch = `main`).
+1. ✅ **Done** — Delete leftover Vercel projects from earlier domain attempts;
+   keep **only** `evolve-habit-tracker-two` connected to the repo
+   (Production Branch = `main`). All other projects removed and confirmed.
 2. Generate a release keystore **once** and back it up **outside the repo**:
    ```bash
    keytool -genkeypair -v -keystore release.keystore -alias <alias> \
@@ -220,6 +220,16 @@ in the schema so no migration will be needed later.
 
 Public repository, owner `Harpreet-Singh29`. Full plan, risks, phases and
 changelog are recorded in the local master plan file.
-=======
-# Evolve-Habit-Tracker
->>>>>>> 6237fc4b3b6e4c32184d25668aba48d7f0a539ac
+
+## Feature: x/week day selection
+
+In the habit form, the **x / week** schedule supports an optional set of weekday
+chips (the same M T W T F S S chips used by the **Days** schedule). Selecting
+days scopes the habit to those days: it appears in **Today** only on the chosen
+weekdays, while the weekly target still counts distinct completions in the
+current week. With no days selected, the habit behaves as "any day counts" and
+is shown every day (this keeps older saved habits and backups compatible).
+
+Guardrails in the form: you cannot select more days than the weekly target, and
+an inline hint appears when the target exceeds the number of selected days (the
+goal is then impossible to reach in one week).

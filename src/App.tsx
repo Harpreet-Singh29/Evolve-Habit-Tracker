@@ -13,6 +13,10 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 };
 
+const TAB_KEYS: Record<string, Tab> = {
+  '1': 'today', '2': 'habits', '3': 'stats', '4': 'settings',
+};
+
 function initialTab(): Tab {
   const params = new URLSearchParams(window.location.search);
   if (params.has('new')) return 'habits';
@@ -40,11 +44,55 @@ export default function App() {
     window.localStorage.setItem('evolve-tab', t);
   }, []);
 
+  const closeForm = useCallback(() => {
+    setFormOpen(false);
+    setEditing(null);
+  }, []);
+
+  const openNew = useCallback(() => { setEditing(null); setFormOpen(true); }, []);
+  const openEdit = useCallback((h: Habit) => { setEditing(h); setFormOpen(true); }, []);
+
   // Theme
   useEffect(() => {
     document.documentElement.classList.toggle('light', theme === 'light');
     window.localStorage.setItem('evolve-theme', theme);
   }, [theme]);
+
+  // Expose modal state to the native back-button handler (lib/backButton.ts).
+  useEffect(() => {
+    window.__evolveModalOpen = formOpen;
+    return () => { window.__evolveModalOpen = false; };
+  }, [formOpen]);
+
+  // Native back button: close an open modal, or return to the Today tab.
+  useEffect(() => {
+    const onClose = () => closeForm();
+    const onToday = () => setTab('today');
+    window.addEventListener('evolve:close-modal', onClose);
+    window.addEventListener('evolve:go-today', onToday);
+    return () => {
+      window.removeEventListener('evolve:close-modal', onClose);
+      window.removeEventListener('evolve:go-today', onToday);
+    };
+  }, [closeForm, setTab]);
+
+  // Keyboard shortcuts for desktop (Phase 2): 1-4 switch tabs, N adds a habit,
+  // Esc closes the form. Ignored while typing in an input/textarea/contenteditable.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      const typing = target && (
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      );
+      if (e.key === 'Escape' && formOpen) { closeForm(); return; }
+      if (typing) return;
+      if (TAB_KEYS[e.key]) { setTab(TAB_KEYS[e.key]); return; }
+      if (e.key.toLowerCase() === 'n') { e.preventDefault(); openNew(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [formOpen, closeForm, openNew, setTab]);
 
   // PWA install prompt (browser only; never fires inside the WebView)
   useEffect(() => {
@@ -78,14 +126,10 @@ export default function App() {
     });
   };
 
-  const openNew = () => { setEditing(null); setFormOpen(true); };
-  const openEdit = (h: Habit) => { setEditing(h); setFormOpen(true); };
-
   const save = (draft: HabitDraft) => {
     if (editing) updateHabit(editing.id, draft);
     else addHabit(draft);
-    setFormOpen(false);
-    setEditing(null);
+    closeForm();
     // Clear the ?new=1 query so a refresh doesn't reopen the form.
     if (window.location.search) window.history.replaceState({}, '', window.location.pathname);
   };
@@ -100,7 +144,7 @@ export default function App() {
           <SettingsView theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} onInstall={onInstall} canInstall={canInstall} />
         )}
       </Layout>
-      <HabitForm open={formOpen} onClose={() => { setFormOpen(false); setEditing(null); }} onSave={save} initial={editing} />
+      <HabitForm open={formOpen} onClose={closeForm} onSave={save} initial={editing} />
     </>
   );
 }

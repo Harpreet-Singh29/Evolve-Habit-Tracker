@@ -4,11 +4,18 @@ import { useStore } from '../../store/useStore';
 import { currentStreak } from '../../lib/streaks';
 import { EmptyState, Icon } from '../../components/ui';
 
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 function scheduleLabel(h: Habit): string {
-  if (h.schedule.type === 'daily') return 'Every day';
-  if (h.schedule.type === 'timesPerWeek') return `${h.schedule.target}× per week`;
-  const names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  return [...h.schedule.days].sort().map((d) => names[d]).join(', ') || 'No days';
+  const s = h.schedule;
+  if (s.type === 'daily') return 'Every day';
+  if (s.type === 'timesPerWeek') {
+    const base = `${s.target}× per week`;
+    if (!s.days || s.days.length === 0) return base;
+    const days = [...s.days].sort().map((d) => DAY_NAMES[d]).join(', ');
+    return `${base} · ${days}`;
+  }
+  return [...s.days].sort().map((d) => DAY_NAMES[d]).join(', ') || 'No days';
 }
 
 export function HabitsView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (h: Habit) => void }) {
