@@ -4,19 +4,19 @@
 
 :root {
   color-scheme: light dark;
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --surface-2: #334155;
-  --surface-3: #273246;      /* raised surface (dark) */
-  --control: #334155;        /* buttons, inputs, chips */
-  --control-hover: #3d4a60;  /* hover/active */
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --border: #2d3a4f;
+  --bg: #18181b;             /* neutral near-black */
+  --surface: #1f1f23;        /* neutral dark surface */
+  --surface-2: #27272a;      /* neutral dark surface-2 */
+  --surface-3: #1f1f23;      /* raised surface (dark) */
+  --control: #27272a;        /* buttons, inputs, chips */
+  --control-hover: #3f3f46;  /* hover/active */
+  --text: #fafafa;           /* near-white text */
+  --muted: #a1a1aa;          /* neutral muted */
+  --border: #3f3f46;         /* neutral border */
   --brand: #ffffff;          /* primary accent (dark mode = white) */
-  --brand-strong: #e2e8f0;   /* pressed state */
-  --brand-text: #0f172a;     /* text on brand buttons (dark) */
-  --brand-focus: #94a3b8;    /* focus ring (dark) */
+  --brand-strong: #e2e2e2;   /* pressed state */
+  --brand-text: #18181b;     /* text on brand buttons (dark) */
+  --brand-focus: #a1a1aa;    /* focus ring (dark) */
 
   /* Neumorphic shadows (dark) */
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.35), 0 1px 1px rgba(0,0,0,0.25);
