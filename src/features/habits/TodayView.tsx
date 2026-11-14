@@ -4,7 +4,7 @@ import { formatDate, getTodayLocal } from '../../lib/dates';
 import { isScheduledOn, weeklyProgress, weeklyTarget } from '../../lib/streaks';
 import { EmptyState, Icon } from '../../components/ui';
 
-export function TodayView({ onAdd }: { onAdd: () => void }) {
+export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: () => void }) {
   const habits = useStore((s) => s.habits);
   const entries = useStore((s) => s.entries);
   const tasks = useStore((s) => s.tasks);
@@ -35,9 +35,12 @@ export function TodayView({ onAdd }: { onAdd: () => void }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-bold">Today</h1>
-        <p className="muted text-sm">{formatDate(today, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Today</h1>
+          <p className="muted text-sm">{formatDate(today, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+        </div>
+        <button className="btn btn-ghost" onClick={onAddTask}><Icon name="plus" className="h-5 w-5" /> Add task</button>
       </div>
 
       {active.length > 0 && (

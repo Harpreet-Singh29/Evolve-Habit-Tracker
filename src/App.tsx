@@ -63,6 +63,7 @@ export default function App() {
   const openNewHabit = useCallback(() => { setEditingHabit(null); setHabitFormOpen(true); }, []);
   const openEditHabit = useCallback((h: Habit) => { setEditingHabit(h); setHabitFormOpen(true); }, []);
   const openNewTask = useCallback(() => { setEditingTask(null); setTaskFormOpen(true); }, []);
+  const openTasksTab = useCallback(() => { setTab('tasks'); }, [setTab]);
 
   // Theme
   useEffect(() => {
@@ -156,7 +157,7 @@ export default function App() {
   return (
     <>
       <Layout tab={tab} onTab={setTab} theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}>
-        {tab === 'today' && <TodayView onAdd={openNewHabit} />}
+        {tab === 'today' && <TodayView onAdd={openNewHabit} onAddTask={openTasksTab} />}
         {tab === 'habits' && <HabitsView onAdd={openNewHabit} onEdit={openEditHabit} />}
         {tab === 'tasks' && <TasksView />}
         {tab === 'stats' && <StatsView />}
