@@ -62,7 +62,7 @@ export function TodayView({ onAdd }: { onAdd: () => void }) {
                 className="card flex w-full items-center gap-4 text-left transition active:scale-[0.99] animate-fade"
                 style={done ? { borderColor: h.color } : undefined}
               >
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-2xl" style={{ background: `${h.color}22` }}>
+                <div className="grid h-12 w-12 shrink-0 place-items-center text-2xl" style={{ background: `${h.color}22`, borderRadius: 'var(--r-lg)' }}>
                   {h.icon}
                 </div>
                 <div className="min-w-0 flex-1">

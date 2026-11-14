@@ -30,7 +30,7 @@ export function Icon({ name, className = 'h-5 w-5' }: { name: string; className?
 export function EmptyState({ icon, title, hint, action }: { icon?: string; title: string; hint?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center animate-fade">
-      <div className="rounded-2xl p-4" style={{ background: 'var(--surface-2)' }}>
+      <div className="p-4" style={{ background: 'var(--surface-2)', borderRadius: 'var(--r-xl)' }}>
         <Icon name={icon ?? 'habits'} className="h-8 w-8 muted" />
       </div>
       <h2 className="text-lg font-semibold">{title}</h2>
@@ -45,8 +45,8 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
       <div
-        className="surface w-full max-w-lg rounded-t-3xl p-5 shadow-xl animate-fade sm:rounded-3xl"
-        style={{ maxHeight: '90vh', overflowY: 'auto' }}
+        className="surface w-full max-w-lg p-5 shadow-xl animate-fade"
+        style={{ maxHeight: '90vh', overflowY: 'auto', borderRadius: 'var(--r-2xl)', borderTopLeftRadius: 'var(--r-2xl)', borderTopRightRadius: 'var(--r-2xl)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

@@ -33,7 +33,7 @@ function showUpdateToast(reload: () => void): void {
   el.style.cssText =
     'position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:60;' +
     'display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);' +
-    'padding:10px 14px;border-radius:14px;background:var(--surface);' +
+    'padding:10px 14px;border-radius:var(--r-xl);background:var(--surface);' +
     'border:1px solid var(--border);color:var(--text);' +
     'box-shadow:0 8px 24px rgba(0,0,0,.35);font:14px system-ui,sans-serif;';
   const label = document.createElement('span');

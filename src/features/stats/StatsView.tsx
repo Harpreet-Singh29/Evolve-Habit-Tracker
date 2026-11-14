@@ -19,9 +19,10 @@ function Heatmap({ habitId }: { habitId: string }) {
           <div
             key={c.date}
             title={`${c.date}${c.done ? ' · done' : c.scheduled ? ' · not done' : ''}`}
-            className="h-4 w-4 rounded-[4px]"
+            className="h-4 w-4"
             style={{
               background: c.done ? h.color : c.scheduled ? 'var(--surface-2)' : 'transparent',
+              borderRadius: 'var(--r-sm)',
               outline: c.date === getTodayLocal() ? '2px solid var(--text)' : 'none',
               outlineOffset: 1,
             }}
@@ -30,9 +31,9 @@ function Heatmap({ habitId }: { habitId: string }) {
       </div>
       <div className="muted mt-2 flex items-center gap-2 text-xs">
         <span>Less</span>
-        <span className="h-3 w-3 rounded-[3px]" style={{ background: 'var(--surface-2)' }} />
-        <span className="h-3 w-3 rounded-[3px]" style={{ background: h.color, opacity: 0.5 }} />
-        <span className="h-3 w-3 rounded-[3px]" style={{ background: h.color }} />
+        <span className="h-3 w-3" style={{ background: 'var(--surface-2)', borderRadius: 'var(--r-xs)' }} />
+        <span className="h-3 w-3" style={{ background: h.color, opacity: 0.5, borderRadius: 'var(--r-xs)' }} />
+        <span className="h-3 w-3" style={{ background: h.color, borderRadius: 'var(--r-xs)' }} />
         <span>More</span>
         <span className="ml-auto">Last 16 weeks</span>
       </div>

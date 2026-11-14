@@ -119,8 +119,8 @@ export function HabitForm({
               <button
                 key={ic}
                 onClick={() => set('icon', ic)}
-                className="tap grid h-11 w-11 place-items-center rounded-xl text-xl"
-                style={{ background: draft.icon === ic ? 'var(--brand)' : 'var(--surface-2)' }}
+                className="tap grid h-11 w-11 place-items-center text-xl"
+                style={{ background: draft.icon === ic ? 'var(--brand)' : 'var(--surface-2)', borderRadius: 'var(--r-lg)' }}
                 aria-label={`Icon ${ic}`}
               >
                 {ic}
@@ -177,10 +177,11 @@ export function HabitForm({
                   <button
                     key={n}
                     onClick={() => toggleDay(n)}
-                    className="tap grid h-11 w-11 place-items-center rounded-xl text-sm font-semibold"
+                    className="tap grid h-11 w-11 place-items-center text-sm font-semibold"
                     style={{
                       background: isExcess ? '#ef4444' : active ? 'var(--brand)' : 'var(--surface-2)',
                       color: active ? '#fff' : undefined,
+                      borderRadius: 'var(--r-lg)',
                     }}
                   >
                     {l}

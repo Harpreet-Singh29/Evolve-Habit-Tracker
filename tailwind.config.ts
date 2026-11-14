@@ -22,6 +22,14 @@ export default {
       fontFamily: {
         sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
+      borderRadius: {
+        'xs': 'var(--r-xs)',
+        'sm': 'var(--r-sm)',
+        'md': 'var(--r-md)',
+        'lg': 'var(--r-lg)',
+        'xl': 'var(--r-xl)',
+        '2xl': 'var(--r-2xl)',
+      },
     },
   },
   plugins: [],

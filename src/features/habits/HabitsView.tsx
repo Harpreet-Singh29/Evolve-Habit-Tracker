@@ -46,7 +46,7 @@ export function HabitsView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (h: H
             const streak = currentStreak(h, entries);
             return (
               <div key={h.id} className="card flex items-center gap-3 animate-fade">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl" style={{ background: `${h.color}22` }}>
+                <div className="grid h-11 w-11 shrink-0 place-items-center text-xl" style={{ background: `${h.color}22`, borderRadius: 'var(--r-lg)' }}>
                   {h.icon}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -54,7 +54,7 @@ export function HabitsView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (h: H
                   <div className="muted text-xs">{scheduleLabel(h)}</div>
                 </div>
                 {streak > 0 && (
-                  <div className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold" style={{ background: 'var(--surface-2)', color: h.color }}>
+                  <div className="flex shrink-0 items-center gap-1 px-2 py-1 text-xs font-semibold" style={{ background: 'var(--surface-2)', color: h.color, borderRadius: 'var(--r-md)' }}>
                     <Icon name="flame" className="h-4 w-4" /> {streak}
                   </div>
                 )}

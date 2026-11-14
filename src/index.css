@@ -11,6 +11,14 @@
   --muted: #94a3b8;
   --border: #334155;
   --brand: #6366f1;
+
+  /* Radius scale (modest reduction — ~25-40% smaller) */
+  --r-xs: 2px;    /* heatmap legend */
+  --r-sm: 3px;    /* heatmap cells */
+  --r-md: 6px;    /* small badges, streak badge, small logos */
+  --r-lg: 8px;    /* buttons, inputs, habit tiles, day chips, large logos */
+  --r-xl: 10px;   /* cards, empty state, toast */
+  --r-2xl: 14px;  /* modal */
 }
 
 html.light {
@@ -65,7 +73,8 @@ textarea {
     color: var(--muted);
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-medium transition active:scale-[0.98] disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 font-medium transition active:scale-[0.98] disabled:opacity-50;
+    border-radius: var(--r-lg);
     min-height: 44px;
   }
   .btn-primary {
@@ -77,12 +86,14 @@ textarea {
     background: var(--surface-2);
   }
   .card {
-    @apply surface rounded-2xl p-4 shadow-sm;
+    @apply surface p-4 shadow-sm;
+    border-radius: var(--r-xl);
   }
   .input {
-    @apply w-full rounded-xl px-3 py-2.5 outline-none;
+    @apply w-full px-3 py-2.5 outline-none;
     background: var(--surface-2);
     border: 1px solid var(--border);
+    border-radius: var(--r-lg);
     min-height: 44px;
   }
   .tap {
