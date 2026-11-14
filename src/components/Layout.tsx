@@ -26,7 +26,7 @@ export function Layout({
   return (
     <div className="min-h-full lg:flex">
       {/* Desktop sidebar (>=1024px) */}
-      <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:shrink-0 surface lg:border-r lg:border-b-0">
+      <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:shrink-0 surface lg:border-r lg:border-b-0" style={{ background: 'var(--surface)' }}>
         <div className="flex items-center gap-3 px-5 py-6">
           <div className="grid h-10 w-10 place-items-center text-xl font-bold text-white" style={{ background: 'var(--brand)', borderRadius: 'var(--r-lg)' }}>E</div>
           <div>
@@ -78,8 +78,8 @@ export function Layout({
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 flex surface lg:hidden"
-        style={{ borderTop: '1px solid var(--border)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="fixed inset-x-0 bottom-0 z-40 flex lg:hidden"
+        style={{ background: 'var(--surface-3)', borderTop: '1px solid var(--border)', paddingBottom: 'env(safe-area-inset-bottom)', boxShadow: 'var(--shadow-lg)' }}
       >
         {TABS.map((t) => (
           <button

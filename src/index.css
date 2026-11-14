@@ -7,10 +7,21 @@
   --bg: #0f172a;
   --surface: #1e293b;
   --surface-2: #334155;
+  --surface-3: #273246;      /* raised surface (dark) */
+  --control: #334155;        /* buttons, inputs, chips */
+  --control-hover: #3d4a60;  /* hover/active */
   --text: #f1f5f9;
   --muted: #94a3b8;
-  --border: #334155;
+  --border: #2d3a4f;
   --brand: #6366f1;
+  --brand-strong: #4f46e5;
+
+  /* Neumorphic shadows (dark) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.35), 0 1px 1px rgba(0,0,0,0.25);
+  --shadow-md: 0 4px 8px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-inset: inset 0 1px 1px rgba(255,255,255,0.06),
+                  inset 0 -1px 1px rgba(0,0,0,0.2);
 
   /* Radius scale (modest reduction — ~25-40% smaller) */
   --r-xs: 2px;    /* heatmap legend */
@@ -22,12 +33,24 @@
 }
 
 html.light {
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --text: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
+  --bg: #eef0f3;
+  --surface: #f5f7fa;
+  --surface-2: #e8ebef;
+  --surface-3: #ffffff;      /* raised surface (light) */
+  --control: #e8ebef;        /* buttons, inputs, chips */
+  --control-hover: #dde1e6;  /* hover/active */
+  --text: #1a1d21;
+  --muted: #6b7280;
+  --border: #d1d5db;
+  --brand: #6366f1;
+  --brand-strong: #4338ca;
+
+  /* Neumorphic shadows (light) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08), 0 1px 1px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 8px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-inset: inset 0 1px 2px rgba(255,255,255,0.8),
+                  inset 0 -1px 1px rgba(0,0,0,0.04);
 }
 
 * {
@@ -69,6 +92,20 @@ textarea {
     background: var(--surface);
     border: 1px solid var(--border);
   }
+  .surface-raised {
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+  }
+  .control {
+    background: var(--control);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-inset);
+  }
+  .control-pressed {
+    background: var(--control-hover);
+    box-shadow: var(--shadow-sm);
+  }
   .muted {
     color: var(--muted);
   }
@@ -76,25 +113,43 @@ textarea {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 font-medium transition active:scale-[0.98] disabled:opacity-50;
     border-radius: var(--r-lg);
     min-height: 44px;
+    background: var(--control);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-inset);
+  }
+  .btn:active:not(:disabled) {
+    background: var(--control-hover);
+    box-shadow: var(--shadow-sm);
   }
   .btn-primary {
     @apply btn text-white;
     background: var(--brand);
+    border-color: transparent;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:active:not(:disabled) {
+    background: var(--brand-strong);
+    box-shadow: var(--shadow-inset);
   }
   .btn-ghost {
     @apply btn;
-    background: var(--surface-2);
+    background: var(--control);
   }
   .card {
-    @apply surface p-4 shadow-sm;
+    @apply surface-raised p-4;
     border-radius: var(--r-xl);
   }
   .input {
     @apply w-full px-3 py-2.5 outline-none;
-    background: var(--surface-2);
+    background: var(--control);
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     min-height: 44px;
+    box-shadow: var(--shadow-inset);
+  }
+  .input:focus {
+    border-color: var(--brand);
+    box-shadow: var(--shadow-inset), 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent);
   }
   .tap {
     min-height: 44px;

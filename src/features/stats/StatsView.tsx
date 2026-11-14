@@ -82,7 +82,7 @@ export function StatsView() {
           {active.map((h) => {
             const rate = Math.round(completionRate(h, entries, today) * 100);
             return (
-              <button key={h.id} onClick={() => setSelected(selected === h.id ? null : h.id)} className="text-left">
+              <button key={h.id} onClick={() => setSelected(selected === h.id ? null : h.id)} className="text-left control w-full px-4 py-3 rounded-xl text-left transition" style={{ textAlign: 'left' }}>
                 <div className="mb-1 flex items-center gap-2 text-sm">
                   <span>{h.icon}</span>
                   <span className="flex-1 truncate">{h.name}</span>

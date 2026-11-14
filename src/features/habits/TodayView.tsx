@@ -59,8 +59,8 @@ export function TodayView({ onAdd }: { onAdd: () => void }) {
               <button
                 key={h.id}
                 onClick={() => toggleEntry(h.id, today)}
-                className="card flex w-full items-center gap-4 text-left transition active:scale-[0.99] animate-fade"
-                style={done ? { borderColor: h.color } : undefined}
+                className="card flex w-full items-center gap-4 text-left transition active:scale-[0.99] animate-fade control-pressed"
+                style={done ? { borderColor: h.color, boxShadow: '0 0 0 2px ' + h.color + '40' } : undefined}
               >
                 <div className="grid h-12 w-12 shrink-0 place-items-center text-2xl" style={{ background: `${h.color}22`, borderRadius: 'var(--r-lg)' }}>
                   {h.icon}
