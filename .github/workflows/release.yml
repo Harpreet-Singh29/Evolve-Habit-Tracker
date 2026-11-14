@@ -44,6 +44,17 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
+      # Fail early with a clear message if the store password or KEY_ALIAS does
+      # not match the keystore. Without this, a mismatch surfaces only as a
+      # cryptic Gradle signing error deep in the assembleRelease log.
+      - name: Verify keystore password and alias
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          keytool -list -keystore android/app/release.keystore \
+            -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS"
+
       - name: Build signed release APK
         working-directory: android
         env:

@@ -7,9 +7,15 @@ apply plugin: 'com.android.application'
 // works for developers without the private keystore.
 def releaseKeystore = file('release.keystore')
 def hasReleaseKeystore = releaseKeystore.exists()
-def ksPassword = System.getenv('KEYSTORE_PASSWORD') ?: 'android'
-def keyAlias = System.getenv('KEY_ALIAS') ?: 'androiddebugkey'
-def keyPassword = System.getenv('KEY_PASSWORD') ?: 'android'
+// NOTE: these locals MUST NOT be named like the signing DSL methods
+// (storePassword / keyAlias / keyPassword). In Gradle's Groovy DSL a local
+// variable shadows the DSL method, so `keyAlias keyAlias` would try to invoke
+// String.call() and fail ("No signature of method: java.lang.String.call()").
+// This only triggers when the real keystore is present (i.e. in CI), which is
+// why local debug builds (no keystore) never exposed it.
+def envStorePassword = System.getenv('KEYSTORE_PASSWORD') ?: 'android'
+def envKeyAlias = System.getenv('KEY_ALIAS') ?: 'androiddebugkey'
+def envKeyPassword = System.getenv('KEY_PASSWORD') ?: 'android'
 
 android {
     namespace "com.harpreetsingh29.habittracker"
@@ -19,9 +25,9 @@ android {
         release {
             if (hasReleaseKeystore) {
                 storeFile releaseKeystore
-                storePassword ksPassword
-                keyAlias keyAlias
-                keyPassword keyPassword
+                storePassword envStorePassword
+                keyAlias envKeyAlias
+                keyPassword envKeyPassword
             }
         }
     }
