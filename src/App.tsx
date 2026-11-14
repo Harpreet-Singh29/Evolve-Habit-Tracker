@@ -28,7 +28,7 @@ function initialTab(): Tab {
 export default function App() {
   const [tab, setTabState] = useState<Tab>(initialTab);
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
-    (window.localStorage.getItem('evolve-theme') as 'dark' | 'light') ?? 'dark',
+    (window.localStorage.getItem('evolve-theme') as 'dark' | 'light') ?? 'light',
   );
   const [formOpen, setFormOpen] = useState(() => new URLSearchParams(window.location.search).has('new'));
   const [editing, setEditing] = useState<Habit | null>(null);
