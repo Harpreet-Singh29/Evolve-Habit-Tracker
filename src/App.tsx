@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Habit } from './types';
+import type { Habit, Task } from './types';
 import { useStore } from './store/useStore';
 import { Layout, type Tab } from './components/Layout';
 import { HabitForm, type HabitDraft } from './features/habits/HabitForm';
+import { TaskForm, type TaskDraft } from './features/habits/TaskForm';
 import { TodayView } from './features/habits/TodayView';
 import { HabitsView } from './features/habits/HabitsView';
+import { TasksView } from './features/habits/TasksView';
 import { StatsView } from './features/stats/StatsView';
 import { SettingsView } from './features/settings/SettingsView';
 
@@ -14,14 +16,14 @@ type InstallPromptEvent = Event & {
 };
 
 const TAB_KEYS: Record<string, Tab> = {
-  '1': 'today', '2': 'habits', '3': 'stats', '4': 'settings',
+  '1': 'today', '2': 'habits', '3': 'tasks', '4': 'stats', '5': 'settings',
 };
 
 function initialTab(): Tab {
   const params = new URLSearchParams(window.location.search);
   if (params.has('new')) return 'habits';
   const saved = window.localStorage.getItem('evolve-tab');
-  if (saved === 'today' || saved === 'habits' || saved === 'stats' || saved === 'settings') return saved;
+  if (saved === 'today' || saved === 'habits' || saved === 'tasks' || saved === 'stats' || saved === 'settings') return saved;
   return 'today';
 }
 
@@ -30,13 +32,17 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     (window.localStorage.getItem('evolve-theme') as 'dark' | 'light') ?? 'light',
   );
-  const [formOpen, setFormOpen] = useState(() => new URLSearchParams(window.location.search).has('new'));
-  const [editing, setEditing] = useState<Habit | null>(null);
+  const [habitFormOpen, setHabitFormOpen] = useState(() => new URLSearchParams(window.location.search).has('new'));
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [canInstall, setCanInstall] = useState(false);
   const installRef = useRef<InstallPromptEvent | null>(null);
 
   const addHabit = useStore((s) => s.addHabit);
   const updateHabit = useStore((s) => s.updateHabit);
+  const addTask = useStore((s) => s.addTask);
+  const updateTask = useStore((s) => s.updateTask);
   const refreshDay = useStore((s) => s.refreshDay);
 
   const setTab = useCallback((t: Tab) => {
@@ -44,13 +50,19 @@ export default function App() {
     window.localStorage.setItem('evolve-tab', t);
   }, []);
 
-  const closeForm = useCallback(() => {
-    setFormOpen(false);
-    setEditing(null);
+  const closeHabitForm = useCallback(() => {
+    setHabitFormOpen(false);
+    setEditingHabit(null);
   }, []);
 
-  const openNew = useCallback(() => { setEditing(null); setFormOpen(true); }, []);
-  const openEdit = useCallback((h: Habit) => { setEditing(h); setFormOpen(true); }, []);
+  const closeTaskForm = useCallback(() => {
+    setTaskFormOpen(false);
+    setEditingTask(null);
+  }, []);
+
+  const openNewHabit = useCallback(() => { setEditingHabit(null); setHabitFormOpen(true); }, []);
+  const openEditHabit = useCallback((h: Habit) => { setEditingHabit(h); setHabitFormOpen(true); }, []);
+  const openNewTask = useCallback(() => { setEditingTask(null); setTaskFormOpen(true); }, []);
 
   // Theme
   useEffect(() => {
@@ -60,13 +72,13 @@ export default function App() {
 
   // Expose modal state to the native back-button handler (lib/backButton.ts).
   useEffect(() => {
-    window.__evolveModalOpen = formOpen;
+    window.__evolveModalOpen = habitFormOpen || taskFormOpen;
     return () => { window.__evolveModalOpen = false; };
-  }, [formOpen]);
+  }, [habitFormOpen, taskFormOpen]);
 
   // Native back button: close an open modal, or return to the Today tab.
   useEffect(() => {
-    const onClose = () => closeForm();
+    const onClose = () => { closeHabitForm(); closeTaskForm(); };
     const onToday = () => setTab('today');
     window.addEventListener('evolve:close-modal', onClose);
     window.addEventListener('evolve:go-today', onToday);
@@ -74,9 +86,9 @@ export default function App() {
       window.removeEventListener('evolve:close-modal', onClose);
       window.removeEventListener('evolve:go-today', onToday);
     };
-  }, [closeForm, setTab]);
+  }, [closeHabitForm, closeTaskForm, setTab]);
 
-  // Keyboard shortcuts for desktop (Phase 2): 1-4 switch tabs, N adds a habit,
+  // Keyboard shortcuts for desktop: 1-5 switch tabs, N adds a habit, T adds a task,
   // Esc closes the form. Ignored while typing in an input/textarea/contenteditable.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -85,14 +97,15 @@ export default function App() {
       const typing = target && (
         target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
       );
-      if (e.key === 'Escape' && formOpen) { closeForm(); return; }
+      if (e.key === 'Escape' && (habitFormOpen || taskFormOpen)) { closeHabitForm(); closeTaskForm(); return; }
       if (typing) return;
       if (TAB_KEYS[e.key]) { setTab(TAB_KEYS[e.key]); return; }
-      if (e.key.toLowerCase() === 'n') { e.preventDefault(); openNew(); }
+      if (e.key.toLowerCase() === 'n') { e.preventDefault(); openNewHabit(); }
+      if (e.key.toLowerCase() === 't') { e.preventDefault(); openNewTask(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [formOpen, closeForm, openNew, setTab]);
+  }, [habitFormOpen, taskFormOpen, closeHabitForm, closeTaskForm, openNewHabit, openNewTask, setTab]);
 
   // PWA install prompt (browser only; never fires inside the WebView)
   useEffect(() => {
@@ -126,25 +139,33 @@ export default function App() {
     });
   };
 
-  const save = (draft: HabitDraft) => {
-    if (editing) updateHabit(editing.id, draft);
+  const saveHabit = (draft: HabitDraft) => {
+    if (editingHabit) updateHabit(editingHabit.id, draft);
     else addHabit(draft);
-    closeForm();
+    closeHabitForm();
     // Clear the ?new=1 query so a refresh doesn't reopen the form.
     if (window.location.search) window.history.replaceState({}, '', window.location.pathname);
+  };
+
+  const saveTask = (draft: TaskDraft) => {
+    if (editingTask) updateTask(editingTask.id, draft);
+    else addTask({ title: draft.title, dueDate: draft.dueDate, dueTime: draft.dueTime, done: false });
+    closeTaskForm();
   };
 
   return (
     <>
       <Layout tab={tab} onTab={setTab} theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}>
-        {tab === 'today' && <TodayView onAdd={openNew} />}
-        {tab === 'habits' && <HabitsView onAdd={openNew} onEdit={openEdit} />}
+        {tab === 'today' && <TodayView onAdd={openNewHabit} />}
+        {tab === 'habits' && <HabitsView onAdd={openNewHabit} onEdit={openEditHabit} />}
+        {tab === 'tasks' && <TasksView />}
         {tab === 'stats' && <StatsView />}
         {tab === 'settings' && (
           <SettingsView theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} onInstall={onInstall} canInstall={canInstall} />
         )}
       </Layout>
-      <HabitForm open={formOpen} onClose={closeForm} onSave={save} initial={editing} />
+      <HabitForm open={habitFormOpen} onClose={closeHabitForm} onSave={saveHabit} initial={editingHabit} />
+      <TaskForm open={taskFormOpen} onClose={closeTaskForm} onSave={saveTask} initial={editingTask} />
     </>
   );
 }

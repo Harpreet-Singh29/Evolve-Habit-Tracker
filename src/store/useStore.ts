@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Backup, Entry, Habit } from '../types';
+import type { Backup, Entry, Habit, Task } from '../types';
 import { getTodayLocal } from '../lib/dates';
 
 export interface StoreState {
   habits: Habit[];
   entries: Entry[];
+  tasks: Task[];
   /** Bumped on app resume so "today" is recomputed (device slept past midnight). */
   dayKey: string;
 
@@ -17,7 +18,12 @@ export interface StoreState {
   toggleEntry: (habitId: string, date: string) => void;
   setEntry: (habitId: string, date: string, done: boolean) => void;
 
-  replaceAll: (data: { habits: Habit[]; entries: Entry[] }) => void;
+  addTask: (t: Omit<Task, 'id' | 'createdAt'>) => string;
+  updateTask: (id: string, patch: Partial<Omit<Task, 'id'>>) => void;
+  deleteTask: (id: string) => void;
+  toggleTask: (id: string) => void;
+
+  replaceAll: (data: { habits: Habit[]; entries: Entry[]; tasks: Task[] }) => void;
   clearAll: () => void;
   refreshDay: () => void;
   toBackup: () => Backup;
@@ -33,6 +39,7 @@ export const useStore = create<StoreState>()(
     (set, get) => ({
       habits: [],
       entries: [],
+      tasks: [],
       dayKey: getTodayLocal(),
 
       addHabit: (h) => {
@@ -77,18 +84,57 @@ export const useStore = create<StoreState>()(
           };
         }),
 
-      replaceAll: ({ habits, entries }) => set({ habits, entries, dayKey: getTodayLocal() }),
-      clearAll: () => set({ habits: [], entries: [], dayKey: getTodayLocal() }),
+      addTask: (t) => {
+        const id = uid();
+        const task: Task = {
+          ...t,
+          id,
+          createdAt: getTodayLocal(),
+        };
+        set((s) => ({ tasks: [...s.tasks, task] }));
+        return id;
+      },
+
+      updateTask: (id, patch) =>
+        set((s) => ({
+          tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch, id: t.id } : t)),
+        })),
+
+      deleteTask: (id) =>
+        set((s) => ({
+          tasks: s.tasks.filter((t) => t.id !== id),
+        })),
+
+      toggleTask: (id) =>
+        set((s) => {
+          const task = s.tasks.find((t) => t.id === id);
+          if (!task) return {};
+          return {
+            tasks: s.tasks.map((t) =>
+              t.id === id
+                ? {
+                    ...t,
+                    done: !t.done,
+                    completedAt: t.done ? undefined : new Date().toISOString(),
+                  }
+                : t,
+            ),
+          };
+        }),
+
+      replaceAll: ({ habits, entries, tasks }) => set({ habits, entries, tasks, dayKey: getTodayLocal() }),
+      clearAll: () => set({ habits: [], entries: [], tasks: [], dayKey: getTodayLocal() }),
       refreshDay: () => set({ dayKey: getTodayLocal() }),
 
       toBackup: () => {
-        const { habits, entries } = get();
+        const { habits, entries, tasks } = get();
         return {
           app: 'evolve',
           version: 1,
           exportedAt: new Date().toISOString(),
           habits,
           entries,
+          tasks,
         };
       },
     }),
@@ -97,8 +143,16 @@ export const useStore = create<StoreState>()(
       version: 1,
       storage: createJSONStorage(() => localStorage),
       // Data shape is stable at v1; migrate() is the hook for future changes.
-      migrate: (persisted, _version) => persisted as StoreState,
-      partialize: (s) => ({ habits: s.habits, entries: s.entries }),
+      migrate: (persisted, _version) => {
+        const p = persisted as Partial<StoreState>;
+        return {
+          habits: p.habits ?? [],
+          entries: p.entries ?? [],
+          tasks: p.tasks ?? [],
+          dayKey: getTodayLocal(),
+        } as StoreState;
+      },
+      partialize: (s) => ({ habits: s.habits, entries: s.entries, tasks: s.tasks }),
     },
   ),
 );

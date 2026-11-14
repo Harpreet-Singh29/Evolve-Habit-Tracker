@@ -1,4 +1,4 @@
-import type { Backup, Entry, Habit } from '../types';
+import type { Backup, Entry, Habit, Task } from '../types';
 import { isValidDateKey } from './dates';
 
 /**
@@ -44,18 +44,24 @@ function isEntry(v: unknown): v is Entry {
   );
 }
 
-export function createBackup(habits: Habit[], entries: Entry[]): Backup {
-  return {
-    app: 'evolve',
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    habits,
-    entries,
-  };
+function isTask(v: unknown): v is Task {
+  if (!v || typeof v !== 'object') return false;
+  const t = v as Record<string, unknown>;
+  return (
+    typeof t.id === 'string' &&
+    typeof t.title === 'string' &&
+    typeof t.dueDate === 'string' &&
+    isValidDateKey(t.dueDate) &&
+    typeof t.done === 'boolean' &&
+    (t.dueTime === undefined || typeof t.dueTime === 'string') &&
+    typeof t.createdAt === 'string' &&
+    isValidDateKey(t.createdAt) &&
+    (t.completedAt === undefined || typeof t.completedAt === 'string')
+  );
 }
 
 /** Throws a readable error instead of corrupting the store on bad input. */
-export function parseBackup(text: string): { habits: Habit[]; entries: Entry[] } {
+export function parseBackup(text: string): { habits: Habit[]; entries: Entry[]; tasks: Task[] } {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -66,17 +72,29 @@ export function parseBackup(text: string): { habits: Habit[]; entries: Entry[] }
   const b = raw as Record<string, unknown>;
   if (b.app !== 'evolve') throw new Error('This is not an Evolve backup file.');
   if (b.version !== 1) throw new Error(`Unsupported backup version: ${String(b.version)}.`);
-  if (!Array.isArray(b.habits) || !Array.isArray(b.entries)) {
-    throw new Error('Backup is missing habits or entries.');
+  if (!Array.isArray(b.habits) || !Array.isArray(b.entries) || !Array.isArray(b.tasks)) {
+    throw new Error('Backup is missing habits, entries, or tasks.');
   }
   if (!b.habits.every(isHabit)) throw new Error('Backup contains an invalid habit.');
   if (!b.entries.every(isEntry)) throw new Error('Backup contains an invalid entry.');
+  if (!b.tasks.every(isTask)) throw new Error('Backup contains an invalid task.');
   const habits = b.habits as Habit[];
   const ids = new Set(habits.map((h) => h.id));
   if (!b.entries.every((e) => ids.has((e as Entry).habitId))) {
     throw new Error('Backup contains an entry for a missing habit.');
   }
-  return { habits, entries: b.entries as Entry[] };
+  return { habits, entries: b.entries as Entry[], tasks: b.tasks as Task[] };
+}
+
+export function createBackup(habits: Habit[], entries: Entry[], tasks: Task[] = []): Backup {
+  return {
+    app: 'evolve',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    habits,
+    entries,
+    tasks,
+  };
 }
 
 export function downloadBackup(backup: Backup): void {

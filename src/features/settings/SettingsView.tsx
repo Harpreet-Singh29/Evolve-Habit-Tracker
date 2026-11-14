@@ -20,6 +20,7 @@ export function SettingsView({
 }) {
   const habits = useStore((s) => s.habits);
   const entries = useStore((s) => s.entries);
+  const tasks = useStore((s) => s.tasks);
   const toBackup = useStore((s) => s.toBackup);
   const replaceAll = useStore((s) => s.replaceAll);
   const clearAll = useStore((s) => s.clearAll);
@@ -37,7 +38,7 @@ export function SettingsView({
     try {
       const data = parseBackup(await file.text());
       replaceAll(data);
-      flash(`Imported ${data.habits.length} habits and ${data.entries.length} check-ins.`);
+      flash(`Imported ${data.habits.length} habits, ${data.entries.length} check-ins, and ${data.tasks.length} tasks.`);
     } catch (err) {
       flash(err instanceof Error ? err.message : 'Import failed.', false);
     } finally {
@@ -76,7 +77,7 @@ export function SettingsView({
           between them.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <button className="btn btn-primary flex-1" onClick={() => downloadBackup(toBackup())} disabled={habits.length === 0 && entries.length === 0}>
+          <button className="btn btn-primary flex-1" onClick={() => downloadBackup(toBackup())} disabled={habits.length === 0 && entries.length === 0 && tasks.length === 0}>
             <Icon name="download" /> Export JSON
           </button>
           <button className="btn btn-ghost flex-1" onClick={() => fileRef.current?.click()}>

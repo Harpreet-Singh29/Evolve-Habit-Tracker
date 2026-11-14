@@ -24,10 +24,21 @@ export interface Entry {
   completedAt?: string; // ISO timestamp for audit/merge only
 }
 
+export interface Task {
+  id: string;
+  title: string;
+  dueDate: string; // YYYY-MM-DD (local)
+  dueTime?: string; // "HH:mm" local, optional
+  done: boolean;
+  createdAt: string; // YYYY-MM-DD (local)
+  completedAt?: string; // ISO timestamp for audit/merge only
+}
+
 export interface Backup {
   app: 'evolve';
   version: 1;
   exportedAt: string;
   habits: Habit[];
   entries: Entry[];
+  tasks: Task[];
 }

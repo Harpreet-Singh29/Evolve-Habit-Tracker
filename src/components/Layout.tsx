@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import { Icon } from './ui';
 
-export type Tab = 'today' | 'habits' | 'stats' | 'settings';
+export type Tab = 'today' | 'habits' | 'tasks' | 'stats' | 'settings';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'today', label: 'Today', icon: 'today' },
   { id: 'habits', label: 'Habits', icon: 'habits' },
+  { id: 'tasks', label: 'Tasks', icon: 'tasks' },
   { id: 'stats', label: 'Stats', icon: 'stats' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
@@ -56,7 +57,7 @@ export function Layout({
             Local-only · no account · no sync
           </p>
           <p className="muted mt-1 px-2 text-[11px] leading-relaxed">
-            Keys 1–4 switch tabs · N new habit · Esc closes
+            Keys 1–5 switch tabs · N new habit · T new task · Esc closes
           </p>
         </div>
       </aside>
