@@ -1,8 +1,9 @@
 /**
  * Generates complete adaptive icon mipmaps for each dynamic state.
- * Combines transparent background + larger foreground for default, attention, and complete states.
+ * Combines transparent background + larger foreground for normal and attention states.
  * These are referenced by the activity-aliases in AndroidManifest.xml.
- * Creates circular icons where the badge artwork fills the circular area.
+ * Creates circular icons where the artwork fills the circular area.
+ * NO color tints - uses distinct artwork for each state.
  */
 
 import sharp from 'sharp';
@@ -22,22 +23,17 @@ const ANDROID_MIPMAP_SIZES = {
 };
 
 const STATES = [
-  { name: 'default', foreground: 'ic_launcher_foreground_default.png', tint: null },
-  { name: 'attention', foreground: 'ic_launcher_foreground_attention.png', tint: '#ef4444' },
-  { name: 'complete', foreground: 'ic_launcher_foreground_complete.png', tint: '#22c55e' },
+  { name: 'default', foreground: 'ic_launcher_foreground.png' },      // Balidan Badge
+  { name: 'attention', foreground: 'ic_launcher_foreground_attention.png' }, // Maroon Skull
 ];
 
 async function generateStateAdaptiveIcons() {
-  console.log('Generating complete adaptive icons for each state (circular, badge-filled)...');
+  console.log('Generating complete adaptive icons for each state (circular, artwork-filled)...');
   
   for (const state of STATES) {
     for (const [density, size] of Object.entries(ANDROID_MIPMAP_SIZES)) {
       const dir = join(androidResDir, `mipmap-${density}`);
       mkdirSync(dir, { recursive: true });
-      
-      // Create a circular background with brand color (or state color) 
-      // The foreground already has the badge at 85% scale centered
-      // We'll composite the foreground onto a circular background
       
       // Load foreground (already at correct scale from gen-icons-from-badge)
       const fgPath = join(dir, state.foreground);
@@ -47,16 +43,10 @@ async function generateStateAdaptiveIcons() {
         .toBuffer();
       
       // Create circular background with brand color
-      // For default: brand color circle
-      // For attention: red tint circle
-      // For complete: green tint circle
-      const bgColors = {
-        default: '#6366f1',
-        attention: '#ef4444',
-        complete: '#22c55e',
-      };
+      // Same brand color for both states - the artwork distinguishes them
+      const bgColor = '#6366f1'; // brand color
       
-      // Create a circular mask background
+      // Create a circular background
       const background = await sharp({
         create: {
           width: size,
@@ -66,7 +56,7 @@ async function generateStateAdaptiveIcons() {
         },
       })
       .composite([{
-        input: Buffer.from(`<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${size/2}" fill="${bgColors[state.name]}"/></svg>`),
+        input: Buffer.from(`<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${size/2}" fill="${bgColor}"/></svg>`),
         gravity: 'center',
       }])
       .png()
@@ -89,7 +79,9 @@ async function generateStateAdaptiveIcons() {
     }
   }
   
-  console.log('\n✅ All state adaptive icons generated (circular, badge-filled)!');
+  console.log('\n✅ All state adaptive icons generated (circular, distinct artwork, no tints)!');
+  console.log('  Normal (default): Balidan Badge artwork');
+  console.log('  Attention: Maroon Skull artwork');
   console.log('These are referenced by activity-aliases in AndroidManifest.xml');
 }
 

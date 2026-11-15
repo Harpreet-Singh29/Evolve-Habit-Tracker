@@ -10,6 +10,7 @@
  *   icon-1024.png      - source for @capacitor/assets generate
  *
  * Also generates Android adaptive icon assets in android/app/src/main/res/
+ * Two states: normal (Balidan Badge) and attention (Maroon Skull)
  */
 
 import sharp from 'sharp';
@@ -19,16 +20,13 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const badgePath = join(root, 'assets', 'balidan badge.jpg');
+const skullPath = join(root, 'assets', 'maroon skull.jpg');
 const outDir = join(root, 'public', 'icons');
 const androidResDir = join(root, 'android', 'app', 'src', 'main', 'res');
 
 mkdirSync(outDir, { recursive: true });
 
 // ---- Configuration ----------------------------------------------------------
-const BRAND_COLOR = '#6366f1'; // brand-500
-const ATTENTION_COLOR = '#ef4444'; // red for attention state
-const COMPLETE_COLOR = '#22c55e'; // green for complete state
-
 const ICON_SIZES = [
   { name: 'icon-192.png', size: 192, maskable: false },
   { name: 'icon-512.png', size: 512, maskable: false },
@@ -50,7 +48,7 @@ async function generatePwaIcons() {
   
   const image = sharp(badgePath);
   const metadata = await image.metadata();
-  console.log(`Source image: ${metadata.width}x${metadata.height}`);
+  console.log(`Source image (badge): ${metadata.width}x${metadata.height}`);
   
   // Generate each size - make badge larger (90% of icon) and circular
   for (const { name, size, maskable } of ICON_SIZES) {
@@ -87,17 +85,13 @@ async function generatePwaIcons() {
     console.log(`  wrote ${name} (${size}x${size})`);
   }
   
-  // Generate SVG favicon - circular badge design
+  // Generate SVG favicon - circular badge design (static, no state changes)
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="badge" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffd700"/>
       <stop offset="0.5" stop-color="#ffaa00"/>
       <stop offset="1" stop-color="#cc8800"/>
-    </linearGradient>
-    <linearGradient id="badge-attention" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ff4444"/>
-      <stop offset="1" stop-color="#cc0000"/>
     </linearGradient>
   </defs>
   <!-- Circular background -->
@@ -125,8 +119,7 @@ async function generatePwaIcons() {
 async function generateAndroidIcons() {
   console.log('Generating Android adaptive icons...');
   
-  // Generate foreground icons for each density
-  // The adaptive icon foreground should be the badge without background, larger
+  // Generate foreground icons for each density (normal state - Balidan Badge)
   // Android adaptive icon safe zone is 66% (2/3), but we can go to ~85% for the artwork
   const FOREGROUND_SCALE = 0.85; // 85% of icon size for the badge artwork
   const PADDING = (1 - FOREGROUND_SCALE) / 2; // ~7.5% padding each side
@@ -135,7 +128,7 @@ async function generateAndroidIcons() {
     const dir = join(androidResDir, `mipmap-${density}`);
     mkdirSync(dir, { recursive: true });
     
-    // Foreground: badge centered, transparent background, larger artwork
+    // Normal state foreground (Balidan Badge)
     await sharp(badgePath)
       .resize(Math.round(size * FOREGROUND_SCALE), Math.round(size * FOREGROUND_SCALE), { fit: 'inside' })
       .extend({
@@ -161,11 +154,35 @@ async function generateAndroidIcons() {
       .png()
       .toFile(join(dir, 'ic_launcher_round_foreground.png'));
     
-    console.log(`  wrote mipmap-${density} foreground (${size}x${size}) at ${Math.round(FOREGROUND_SCALE * 100)}% scale`);
+    // Attention state foreground (Maroon Skull) - distinct artwork, no tint
+    await sharp(skullPath)
+      .resize(Math.round(size * FOREGROUND_SCALE), Math.round(size * FOREGROUND_SCALE), { fit: 'inside' })
+      .extend({
+        top: Math.round(size * PADDING),
+        bottom: Math.round(size * PADDING),
+        left: Math.round(size * PADDING),
+        right: Math.round(size * PADDING),
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png()
+      .toFile(join(dir, 'ic_launcher_foreground_attention.png'));
+    
+    await sharp(skullPath)
+      .resize(Math.round(size * FOREGROUND_SCALE), Math.round(size * FOREGROUND_SCALE), { fit: 'inside' })
+      .extend({
+        top: Math.round(size * PADDING),
+        bottom: Math.round(size * PADDING),
+        left: Math.round(size * PADDING),
+        right: Math.round(size * PADDING),
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png()
+      .toFile(join(dir, 'ic_launcher_round_foreground_attention.png'));
+    
+    console.log(`  wrote mipmap-${density} foregrounds (${size}x${size}) at ${Math.round(FOREGROUND_SCALE * 100)}% scale`);
   }
   
   // Generate background (transparent for adaptive icon - let the launcher handle mask)
-  // We'll use a transparent background so the badge artwork shows through the mask
   for (const [density, size] of Object.entries(ANDROID_MIPMAP_SIZES)) {
     const dir = join(androidResDir, `mipmap-${density}`);
     
@@ -203,48 +220,8 @@ async function generateAndroidIcons() {
   writeFileSync(join(androidResDir, 'mipmap-anydpi-v26', 'ic_launcher_round.xml'), adaptiveIconXml);
   console.log('  updated adaptive icon XML');
   
-  // Generate attention and complete state foreground variants
-  await generateAndroidStateIcons();
-}
-
-async function generateAndroidStateIcons() {
-  console.log('Generating Android dynamic icon state variants...');
-  
-  // For dynamic icons, we need separate foreground assets for each state
-  const FOREGROUND_SCALE = 0.85;
-  const PADDING = (1 - FOREGROUND_SCALE) / 2;
-  
-  const states = [
-    { name: 'default', tint: null },
-    { name: 'attention', tint: ATTENTION_COLOR },
-    { name: 'complete', tint: COMPLETE_COLOR },
-  ];
-  
-  for (const state of states) {
-    for (const [density, size] of Object.entries(ANDROID_MIPMAP_SIZES)) {
-      const dir = join(androidResDir, `mipmap-${density}`);
-      mkdirSync(dir, { recursive: true });
-      
-      let pipeline = sharp(badgePath)
-        .resize(Math.round(size * FOREGROUND_SCALE), Math.round(size * FOREGROUND_SCALE), { fit: 'inside' })
-        .extend({
-          top: Math.round(size * PADDING),
-          bottom: Math.round(size * PADDING),
-          left: Math.round(size * PADDING),
-          right: Math.round(size * PADDING),
-          background: { r: 0, g: 0, b: 0, alpha: 0 },
-        });
-      
-      if (state.tint) {
-        // Apply color tint
-        pipeline = pipeline.tint(state.tint);
-      }
-      
-      await pipeline.png().toFile(join(dir, `ic_launcher_foreground_${state.name}.png`));
-      await pipeline.png().toFile(join(dir, `ic_launcher_round_foreground_${state.name}.png`));
-    }
-    console.log(`  wrote ${state.name} state foreground variants at ${Math.round(FOREGROUND_SCALE * 100)}% scale`);
-  }
+  console.log('  Normal state: Balidan Badge artwork');
+  console.log('  Attention state: Maroon Skull artwork (distinct, no tint)');
 }
 
 // ---- Main -------------------------------------------------------------------

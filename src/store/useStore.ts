@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Backup, Entry, Habit, Task } from '../types';
 import { getTodayLocal } from '../lib/dates';
 
-export type IconState = 'DEFAULT' | 'ATTENTION' | 'COMPLETE';
+export type IconState = 'DEFAULT' | 'ATTENTION';
 
 export interface StoreState {
   habits: Habit[];
@@ -171,12 +171,10 @@ export const useStore = create<StoreState>()(
         const today = getTodayLocal();
         
         let incompleteCount = 0;
-        let totalDueToday = 0;
         
         // Check habits due today
         for (const habit of habits) {
           if (get().isHabitDueToday(habit, today)) {
-            totalDueToday++;
             const isDone = entries.some(e => e.habitId === habit.id && e.date === today && e.done);
             if (!isDone) {
               incompleteCount++;
@@ -186,17 +184,13 @@ export const useStore = create<StoreState>()(
         
         // Check tasks due today
         for (const task of tasks) {
-          if (task.dueDate === today) {
-            totalDueToday++;
-            if (!task.done) {
-              incompleteCount++;
-            }
+          if (task.dueDate === today && !task.done) {
+            incompleteCount++;
           }
         }
         
-        if (incompleteCount > 0) return 'ATTENTION';
-        if (totalDueToday > 0) return 'COMPLETE';
-        return 'DEFAULT';
+        // Two states only: ATTENTION if any incomplete, DEFAULT otherwise (complete or nothing due)
+        return incompleteCount > 0 ? 'ATTENTION' : 'DEFAULT';
       },
     }),
     {

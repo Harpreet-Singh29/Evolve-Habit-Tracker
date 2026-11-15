@@ -36,15 +36,15 @@ public class MainActivity extends BridgeActivity {
             Log.d(TAG, "Added JavaScript interface 'Android' for dynamic icon");
         }
     }
+    
     private static final String PACKAGE_NAME = "com.harpreetsingh29.habittracker";
     
-    // Activity alias class names
+    // Activity alias class names (two states: Default and Attention)
     private static final String ALIAS_DEFAULT = PACKAGE_NAME + ".launcher.DefaultIcon";
     private static final String ALIAS_ATTENTION = PACKAGE_NAME + ".launcher.AttentionIcon";
-    private static final String ALIAS_COMPLETE = PACKAGE_NAME + ".launcher.CompleteIcon";
     
-    // Icon states
-    private enum IconState { DEFAULT, ATTENTION, COMPLETE }
+    // Icon states: DEFAULT (normal/complete) and ATTENTION (incomplete due today)
+    private enum IconState { DEFAULT, ATTENTION }
     
     @Override
     public void onResume() {
@@ -62,7 +62,7 @@ public class MainActivity extends BridgeActivity {
     
     /**
      * Called from JavaScript via @JavascriptInterface to update the launcher icon.
-     * @param stateString One of "DEFAULT", "ATTENTION", "COMPLETE"
+     * @param stateString One of "DEFAULT", "ATTENTION"
      */
     @JavascriptInterface
     public void updateIconState(String stateString) {
@@ -99,7 +99,6 @@ public class MainActivity extends BridgeActivity {
         PackageManager pm = getPackageManager();
         ComponentName defaultAlias = new ComponentName(this, ALIAS_DEFAULT);
         ComponentName attentionAlias = new ComponentName(this, ALIAS_ATTENTION);
-        ComponentName completeAlias = new ComponentName(this, ALIAS_COMPLETE);
         
         // Disable all first
         pm.setComponentEnabledSetting(defaultAlias, 
@@ -108,18 +107,12 @@ public class MainActivity extends BridgeActivity {
         pm.setComponentEnabledSetting(attentionAlias, 
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
             PackageManager.DONT_KILL_APP);
-        pm.setComponentEnabledSetting(completeAlias, 
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
-            PackageManager.DONT_KILL_APP);
         
         // Enable the target
         ComponentName targetAlias;
         switch (state) {
             case ATTENTION:
                 targetAlias = attentionAlias;
-                break;
-            case COMPLETE:
-                targetAlias = completeAlias;
                 break;
             case DEFAULT:
             default:
@@ -153,7 +146,6 @@ public class MainActivity extends BridgeActivity {
             
             ComponentName defaultAlias = new ComponentName(context, ALIAS_DEFAULT);
             ComponentName attentionAlias = new ComponentName(context, ALIAS_ATTENTION);
-            ComponentName completeAlias = new ComponentName(context, ALIAS_COMPLETE);
             
             pm.setComponentEnabledSetting(defaultAlias, 
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
@@ -161,17 +153,11 @@ public class MainActivity extends BridgeActivity {
             pm.setComponentEnabledSetting(attentionAlias, 
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
                 PackageManager.DONT_KILL_APP);
-            pm.setComponentEnabledSetting(completeAlias, 
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
-                PackageManager.DONT_KILL_APP);
             
             ComponentName targetAlias;
             switch (iconState) {
                 case ATTENTION:
                     targetAlias = attentionAlias;
-                    break;
-                case COMPLETE:
-                    targetAlias = completeAlias;
                     break;
                 case DEFAULT:
                 default:
