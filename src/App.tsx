@@ -15,6 +15,27 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 };
 
+// Detect if running in Capacitor Android WebView
+const isAndroidWebView = () => {
+  return typeof window !== 'undefined' && 'Capacitor' in window && 
+         (window as Window & { Capacitor?: { getPlatform?: () => string } }).Capacitor?.getPlatform?.() === 'android';
+};
+
+// Extend Window interface for native bridge
+declare global {
+  interface Window {
+    Android?: {
+      updateIconState: (state: string) => void;
+    };
+    EvolveNative?: {
+      requestIconUpdate: () => void;
+    };
+    Capacitor?: {
+      getPlatform: () => string;
+    };
+  }
+}
+
 const TAB_KEYS: Record<string, Tab> = {
   '1': 'today', '2': 'habits', '3': 'tasks', '4': 'stats', '5': 'settings',
 };
@@ -64,6 +85,60 @@ export default function App() {
   const openEditHabit = useCallback((h: Habit) => { setEditingHabit(h); setHabitFormOpen(true); }, []);
   const openNewTask = useCallback(() => { setEditingTask(null); setTaskFormOpen(true); }, []);
   const openTasksTab = useCallback(() => { setTab('tasks'); }, [setTab]);
+
+  // Native Android bridge for dynamic icon
+  const computeAndUpdateIcon = useCallback(() => {
+    const state = useStore.getState().computeIconState();
+    
+    // Call native Android if available
+    if (isAndroidWebView() && window.Android) {
+      window.Android.updateIconState(state);
+    }
+    
+    // Also expose for native-to-web calls
+    window.EvolveNative = {
+      requestIconUpdate: () => computeAndUpdateIcon(),
+    };
+  }, []);
+
+  // Initialize native bridge and update icon on store changes
+  useEffect(() => {
+    if (!isAndroidWebView()) return;
+    
+    // Initial computation
+    computeAndUpdateIcon();
+    
+    // Subscribe to store changes
+    const unsubscribe = useStore.subscribe((state) => {
+      // Only recompute on relevant changes
+      if (state.habits || state.entries || state.tasks) {
+        computeAndUpdateIcon();
+      }
+    });
+    
+    return unsubscribe;
+  }, [computeAndUpdateIcon]);
+
+  // Update icon on app resume / visibility change (date may have changed)
+  useEffect(() => {
+    if (!isAndroidWebView()) return;
+    
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        computeAndUpdateIcon();
+      }
+    };
+    
+    const onFocus = () => computeAndUpdateIcon();
+    
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [computeAndUpdateIcon]);
 
   // Theme
   useEffect(() => {

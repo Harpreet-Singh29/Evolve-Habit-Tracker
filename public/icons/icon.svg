@@ -1,7 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#818cf8"/>
-  </linearGradient></defs>
-  <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <path fill="#fff" d="M148 133h73v61h88v-61h73v246h-73v-61h-88v61h-73z"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1a2e"/>
+      <stop offset="1" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd700"/>
+      <stop offset="0.5" stop-color="#ffaa00"/>
+      <stop offset="1" stop-color="#cc8800"/>
+    </linearGradient>
+    <linearGradient id="badge-attention" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff4444"/>
+      <stop offset="1" stop-color="#cc0000"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Balidan Badge: upward dagger with wings -->
+  <g transform="translate(256, 256) scale(1.2)">
+    <!-- Wings -->
+    <path fill="url(#badge)" d="M-80,0 Q-120,-40 -100,-90 Q-80,-60 -60,-80 Q-40,-40 0,0 Z"/>
+    <path fill="url(#badge)" d="M80,0 Q120,-40 100,-90 Q80,-60 60,-80 Q40,-40 0,0 Z"/>
+    <!-- Dagger blade -->
+    <path fill="url(#badge)" d="M-12,-20 L0,-100 L12,-20 Z"/>
+    <!-- Dagger guard -->
+    <path fill="url(#badge)" d="M-30,-10 L30,-10 L25,-5 L-25,-5 Z"/>
+    <!-- Dagger handle -->
+    <path fill="#8B6914" d="M-10,-5 L-10,30 L10,30 L10,-5 Z"/>
+    <!-- Handle pommel -->
+    <circle cx="0" cy="35" r="12" fill="url(#badge)"/>
+  </g>
 </svg>

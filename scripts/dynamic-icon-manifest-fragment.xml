@@ -1,0 +1,44 @@
+<!-- Dynamic Icon Activity Aliases -->
+        <!-- Only one should be enabled at a time via PackageManager -->
+        
+        <!-- Default state (start of day, nothing due) -->
+        <activity-alias
+            android:name=".launcher.DefaultIcon"
+            android:targetActivity="com.harpreetsingh29.habittracker.MainActivity"
+            android:icon="@mipmap/ic_launcher_default"
+            android:label="@string/app_name"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Attention state (incomplete habits/tasks due today) -->
+        <activity-alias
+            android:name=".launcher.AttentionIcon"
+            android:targetActivity="com.harpreetsingh29.habittracker.MainActivity"
+            android:icon="@mipmap/ic_launcher_attention"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Complete state (all due today items done) -->
+        <activity-alias
+            android:name=".launcher.CompleteIcon"
+            android:targetActivity="com.harpreetsingh29.habittracker.MainActivity"
+            android:icon="@mipmap/ic_launcher_complete"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>

@@ -3,6 +3,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Backup, Entry, Habit, Task } from '../types';
 import { getTodayLocal } from '../lib/dates';
 
+export type IconState = 'DEFAULT' | 'ATTENTION' | 'COMPLETE';
+
 export interface StoreState {
   habits: Habit[];
   entries: Entry[];
@@ -27,6 +29,10 @@ export interface StoreState {
   clearAll: () => void;
   refreshDay: () => void;
   toBackup: () => Backup;
+
+  // Icon state helpers
+  computeIconState: () => IconState;
+  isHabitDueToday: (habit: Habit, today: string) => boolean;
 }
 
 const uid = () =>
@@ -136,6 +142,61 @@ export const useStore = create<StoreState>()(
           entries,
           tasks,
         };
+      },
+
+      // Check if a habit is due today based on its schedule
+      isHabitDueToday: (habit: Habit, today: string) => {
+        if (habit.archived) return false;
+        
+        const weekday = new Date(today + 'T12:00:00').getDay(); // 0=Sun..6=Sat
+        
+        switch (habit.schedule.type) {
+          case 'daily':
+            return true;
+          case 'weekdays':
+            return habit.schedule.days.includes(weekday);
+          case 'timesPerWeek':
+            if (habit.schedule.days && habit.schedule.days.length > 0) {
+              return habit.schedule.days.includes(weekday);
+            }
+            // If no specific days, it's due every day but only counts toward weekly target
+            // For icon purposes, treat as due today
+            return true;
+        }
+      },
+
+      // Compute icon state based on today's habits and tasks
+      computeIconState: () => {
+        const { habits, entries, tasks } = get();
+        const today = getTodayLocal();
+        
+        let incompleteCount = 0;
+        let totalDueToday = 0;
+        
+        // Check habits due today
+        for (const habit of habits) {
+          if (get().isHabitDueToday(habit, today)) {
+            totalDueToday++;
+            const isDone = entries.some(e => e.habitId === habit.id && e.date === today && e.done);
+            if (!isDone) {
+              incompleteCount++;
+            }
+          }
+        }
+        
+        // Check tasks due today
+        for (const task of tasks) {
+          if (task.dueDate === today) {
+            totalDueToday++;
+            if (!task.done) {
+              incompleteCount++;
+            }
+          }
+        }
+        
+        if (incompleteCount > 0) return 'ATTENTION';
+        if (totalDueToday > 0) return 'COMPLETE';
+        return 'DEFAULT';
       },
     }),
     {
