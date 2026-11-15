@@ -134,11 +134,14 @@ export function TasksView() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          icon="tasks"
-          title={`No ${filter} tasks`}
-          hint={filter === 'today' ? 'Tasks due today will appear here.' : filter === 'upcoming' ? 'Future tasks will appear here.' : filter === 'overdue' ? 'Overdue tasks will appear here.' : 'All tasks will appear here.'}
-        />
+        <>
+          <EmptyState
+            icon="tasks"
+            title={`No ${filter} tasks`}
+            hint={filter === 'today' ? 'Tasks due today will appear here.' : filter === 'upcoming' ? 'Future tasks will appear here.' : filter === 'overdue' ? 'Overdue tasks will appear here.' : 'All tasks will appear here.'}
+          />
+          <TaskForm open={formOpen} onClose={closeForm} onSave={handleSave} initial={editing} />
+        </>
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((t) => {
