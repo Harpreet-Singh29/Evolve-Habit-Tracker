@@ -25,7 +25,8 @@
         <activity-alias
             android:name=".launcher.DefaultIcon"
             android:targetActivity="com.harpreetsingh29.habittracker.MainActivity"
-            android:icon="@mipmap/ic_launcher_default"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
             android:label="@string/app_name"
             android:enabled="true"
             android:exported="true">
@@ -40,6 +41,7 @@
             android:name=".launcher.AttentionIcon"
             android:targetActivity="com.harpreetsingh29.habittracker.MainActivity"
             android:icon="@mipmap/ic_launcher_attention"
+            android:roundIcon="@mipmap/ic_launcher_attention_round"
             android:label="@string/app_name"
             android:enabled="false"
             android:exported="true">

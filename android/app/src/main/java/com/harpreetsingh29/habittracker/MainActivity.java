@@ -67,9 +67,12 @@ public class MainActivity extends BridgeActivity {
     @JavascriptInterface
     public void updateIconState(String stateString) {
         Log.d(TAG, "updateIconState called from JS: " + stateString);
+        if (stateString == null) {
+            return;
+        }
         try {
-            IconState state = IconState.valueOf(stateString.toUpperCase());
-            setEnabledAlias(state);
+            IconState state = IconState.valueOf(stateString.trim().toUpperCase(Locale.ROOT));
+            setEnabledAlias(this, state);
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid icon state: " + stateString);
         }
@@ -93,38 +96,49 @@ public class MainActivity extends BridgeActivity {
     }
     
     /**
-     * Enable the activity alias for the given state, disable others.
+     * Enable the activity alias for the given state and disable the other alias.
+     * Skips PackageManager updates when the desired state is already active, and
+     * enables the target alias before disabling the previous one so launchers
+     * never observe zero enabled launcher entries.
      */
-    private void setEnabledAlias(IconState state) {
-        PackageManager pm = getPackageManager();
-        ComponentName defaultAlias = new ComponentName(this, ALIAS_DEFAULT);
-        ComponentName attentionAlias = new ComponentName(this, ALIAS_ATTENTION);
-        
-        // Disable all first
-        pm.setComponentEnabledSetting(defaultAlias, 
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
-            PackageManager.DONT_KILL_APP);
-        pm.setComponentEnabledSetting(attentionAlias, 
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
-            PackageManager.DONT_KILL_APP);
-        
-        // Enable the target
-        ComponentName targetAlias;
-        switch (state) {
-            case ATTENTION:
-                targetAlias = attentionAlias;
-                break;
-            case DEFAULT:
-            default:
-                targetAlias = defaultAlias;
-                break;
+    private static void setEnabledAlias(Context context, IconState state) {
+        PackageManager pm = context.getPackageManager();
+        ComponentName defaultAlias = new ComponentName(context, ALIAS_DEFAULT);
+        ComponentName attentionAlias = new ComponentName(context, ALIAS_ATTENTION);
+
+        int defaultSetting = pm.getComponentEnabledSetting(defaultAlias);
+        int attentionSetting = pm.getComponentEnabledSetting(attentionAlias);
+
+        // In AndroidManifest.xml, DefaultIcon has enabled="true" and AttentionIcon has enabled="false".
+        boolean defaultIsEnabled =
+            defaultSetting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED ||
+            defaultSetting == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
+        boolean attentionIsEnabled =
+            attentionSetting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+
+        if (state == IconState.ATTENTION) {
+            if (attentionIsEnabled && !defaultIsEnabled) {
+                return;
+            }
+            pm.setComponentEnabledSetting(attentionAlias,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP);
+            pm.setComponentEnabledSetting(defaultAlias,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+            Log.d(TAG, "Enabled launcher alias: " + attentionAlias.getClassName());
+        } else {
+            if (defaultIsEnabled && !attentionIsEnabled) {
+                return;
+            }
+            pm.setComponentEnabledSetting(defaultAlias,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP);
+            pm.setComponentEnabledSetting(attentionAlias,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+            Log.d(TAG, "Enabled launcher alias: " + defaultAlias.getClassName());
         }
-        
-        pm.setComponentEnabledSetting(targetAlias, 
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 
-            PackageManager.DONT_KILL_APP);
-        
-        Log.d(TAG, "Enabled launcher alias: " + targetAlias.getClassName());
     }
     
     /**
@@ -140,36 +154,12 @@ public class MainActivity extends BridgeActivity {
      * Static method to be called from Capacitor plugins if needed.
      */
     public static void updateIconFromPlugin(Context context, String state) {
+        if (state == null) {
+            return;
+        }
         try {
-            IconState iconState = IconState.valueOf(state.toUpperCase());
-            PackageManager pm = context.getPackageManager();
-            
-            ComponentName defaultAlias = new ComponentName(context, ALIAS_DEFAULT);
-            ComponentName attentionAlias = new ComponentName(context, ALIAS_ATTENTION);
-            
-            pm.setComponentEnabledSetting(defaultAlias, 
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
-                PackageManager.DONT_KILL_APP);
-            pm.setComponentEnabledSetting(attentionAlias, 
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 
-                PackageManager.DONT_KILL_APP);
-            
-            ComponentName targetAlias;
-            switch (iconState) {
-                case ATTENTION:
-                    targetAlias = attentionAlias;
-                    break;
-                case DEFAULT:
-                default:
-                    targetAlias = defaultAlias;
-                    break;
-            }
-            
-            pm.setComponentEnabledSetting(targetAlias, 
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 
-                PackageManager.DONT_KILL_APP);
-                
-            Log.d(TAG, "Plugin updated launcher alias: " + targetAlias.getClassName());
+            IconState iconState = IconState.valueOf(state.trim().toUpperCase(Locale.ROOT));
+            setEnabledAlias(context, iconState);
         } catch (Exception e) {
             Log.e(TAG, "Error updating icon from plugin", e);
         }
