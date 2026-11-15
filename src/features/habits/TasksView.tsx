@@ -101,6 +101,7 @@ export function TasksView() {
           hint="Create a task to see it here. Tasks are one-off items with due dates, separate from your recurring habits."
           action={<button className="btn btn-primary mt-2" onClick={openNew}><Icon name="plus" /> Add a task</button>}
         />
+        <TaskForm open={formOpen} onClose={closeForm} onSave={handleSave} initial={editing} />
       </div>
     );
   }
