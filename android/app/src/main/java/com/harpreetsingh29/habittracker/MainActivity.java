@@ -47,14 +47,14 @@ public class MainActivity extends BridgeActivity {
     private enum IconState { DEFAULT, ATTENTION, COMPLETE }
     
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         // Update icon when app comes to foreground
         updateIconFromWebView();
     }
     
     @Override
-    protected void onNewIntent(android.content.Intent intent) {
+    public void onNewIntent(android.content.Intent intent) {
         super.onNewIntent(intent);
         // Handle date change or data refresh
         updateIconFromWebView();
