@@ -19,8 +19,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const badgePath = join(root, 'assets', 'balidan badge.jpg');
-const skullPath = join(root, 'assets', 'maroon skull.jpg');
+const badgePath = join(root, 'assets', 'balidan badge.png');
+const skullPath = join(root, 'assets', 'maroon skull.png');
 const outDir = join(root, 'public', 'icons');
 const androidResDir = join(root, 'android', 'app', 'src', 'main', 'res');
 
