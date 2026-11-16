@@ -1,5 +1,6 @@
 import type { Backup, Entry, Habit, Task } from '../types';
 import { isValidDateKey } from './dates';
+import { isNative } from './platform';
 
 /**
  * Export/Import JSON is the ONLY bridge between the two separate local stores
@@ -98,7 +99,17 @@ export function createBackup(habits: Habit[], entries: Entry[], tasks: Task[] = 
 }
 
 export function downloadBackup(backup: Backup): void {
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const filename = `evolve-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const json = JSON.stringify(backup, null, 2);
+
+  // Android WebView does not consistently support downloads from blob: URLs.
+  // Use the native CreateDocument picker so the user can choose where to save.
+  if (isNative() && window.Android?.exportBackup) {
+    window.Android.exportBackup(json, filename);
+    return;
+  }
+
+  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

@@ -5,12 +5,16 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
@@ -28,10 +32,15 @@ import java.util.Locale;
 public class MainActivity extends BridgeActivity {
     
     private static final String TAG = "EvolveMainActivity";
+    private ActivityResultLauncher<String> createBackupFileLauncher;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        createBackupFileLauncher = registerForActivityResult(
+            new ActivityResultContracts.CreateDocument("application/json"),
+            this::writeBackupFile
+        );
         configureSystemBars();
         
         // Add JavaScript interface for dynamic icon updates
@@ -59,6 +68,44 @@ public class MainActivity extends BridgeActivity {
             .putBoolean("lightTheme", isLightTheme)
             .apply();
         runOnUiThread(() -> applySystemBarAppearance(isLightTheme));
+    }
+
+    /** Open Android's document picker so backups can be saved from the WebView. */
+    @JavascriptInterface
+    public void exportBackup(String json, String filename) {
+        if (json == null || createBackupFileLauncher == null) {
+            return;
+        }
+        runOnUiThread(() -> {
+            getPreferences(MODE_PRIVATE).edit().putString("pendingBackup", json).apply();
+            createBackupFileLauncher.launch(
+                filename == null || filename.trim().isEmpty()
+                    ? "evolve-backup.json"
+                    : filename
+            );
+        });
+    }
+
+    private void writeBackupFile(Uri uri) {
+        if (uri == null) {
+            getPreferences(MODE_PRIVATE).edit().remove("pendingBackup").apply();
+            return;
+        }
+        String json = getPreferences(MODE_PRIVATE).getString("pendingBackup", null);
+        getPreferences(MODE_PRIVATE).edit().remove("pendingBackup").apply();
+        if (json == null) {
+            return;
+        }
+        try (java.io.OutputStream output = getContentResolver().openOutputStream(uri)) {
+            if (output == null) {
+                throw new java.io.IOException("Unable to open selected backup file");
+            }
+            output.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            Toast.makeText(this, "Backup exported successfully", Toast.LENGTH_SHORT).show();
+        } catch (java.io.IOException e) {
+            Log.e(TAG, "Failed to write backup file", e);
+            Toast.makeText(this, "Could not save backup file", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void configureSystemBars() {

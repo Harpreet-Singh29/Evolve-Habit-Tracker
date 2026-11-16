@@ -27,6 +27,7 @@ declare global {
     Android?: {
       updateIconState: (state: string) => void;
       setAppTheme: (theme: 'dark' | 'light') => void;
+      exportBackup: (json: string, filename: string) => void;
     };
     EvolveNative?: {
       requestIconUpdate: () => void;
