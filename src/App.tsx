@@ -26,6 +26,7 @@ declare global {
   interface Window {
     Android?: {
       updateIconState: (state: string) => void;
+      setAppTheme: (theme: 'dark' | 'light') => void;
     };
     EvolveNative?: {
       requestIconUpdate: () => void;
@@ -144,6 +145,9 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('light', theme === 'light');
     window.localStorage.setItem('evolve-theme', theme);
+    if (isAndroidWebView() && window.Android?.setAppTheme) {
+      window.Android.setAppTheme(theme);
+    }
   }, [theme]);
 
   // Expose modal state to the native back-button handler (lib/backButton.ts).

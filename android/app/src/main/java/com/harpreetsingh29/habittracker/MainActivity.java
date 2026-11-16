@@ -3,11 +3,16 @@ package com.harpreetsingh29.habittracker;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
+
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
@@ -27,6 +32,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        configureSystemBars();
         
         // Add JavaScript interface for dynamic icon updates
         // This must be done after super.onCreate() initializes the bridge
@@ -37,6 +43,54 @@ public class MainActivity extends BridgeActivity {
         }
     }
     
+    /**
+     * Draw the WebView behind the system bars and keep navigation-bar icons
+     * readable against Evolve's current web theme. The WebView CSS supplies the
+     * actual light/dark background, including beneath the gesture indicator.
+     */
+    @JavascriptInterface
+    public void setAppTheme(String theme) {
+        if (theme == null) {
+            return;
+        }
+        boolean isLightTheme = "light".equalsIgnoreCase(theme.trim());
+        getSharedPreferences("evolve", MODE_PRIVATE)
+            .edit()
+            .putBoolean("lightTheme", isLightTheme)
+            .apply();
+        runOnUiThread(() -> applySystemBarAppearance(isLightTheme));
+    }
+
+    private void configureSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        boolean isLightTheme = getSharedPreferences("evolve", MODE_PRIVATE)
+            .getBoolean("lightTheme", !isSystemInDarkTheme());
+        applySystemBarAppearance(isLightTheme);
+    }
+
+    private boolean isSystemInDarkTheme() {
+        int nightMode = getResources().getConfiguration().uiMode
+            & Configuration.UI_MODE_NIGHT_MASK;
+        return nightMode == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    private void applySystemBarAppearance(boolean isLightTheme) {
+        WindowInsetsControllerCompat controller =
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (controller != null) {
+            controller.setAppearanceLightNavigationBars(isLightTheme);
+            controller.setAppearanceLightStatusBars(isLightTheme);
+        }
+
+        // Transparent system bars let the WebView's themed surface extend beneath
+        // them on legacy Android versions as well as modern edge-to-edge devices.
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
+    }
+
     private static final String PACKAGE_NAME = "com.harpreetsingh29.habittracker";
     
     // Activity alias class names (two states: Default and Attention)
