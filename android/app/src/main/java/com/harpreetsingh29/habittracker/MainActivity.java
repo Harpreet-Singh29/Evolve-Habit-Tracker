@@ -77,34 +77,55 @@ public class MainActivity extends BridgeActivity {
             return;
         }
         runOnUiThread(() -> {
-            getPreferences(MODE_PRIVATE).edit().putString("pendingBackup", json).apply();
-            createBackupFileLauncher.launch(
-                filename == null || filename.trim().isEmpty()
-                    ? "evolve-backup.json"
-                    : filename
-            );
+            try {
+                java.io.File backupFile = java.io.File.createTempFile(
+                    "evolve-backup-", ".json", getCacheDir()
+                );
+                try (java.io.FileOutputStream output = new java.io.FileOutputStream(backupFile)) {
+                    output.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                }
+                getPreferences(MODE_PRIVATE).edit()
+                    .putString("pendingBackupFile", backupFile.getAbsolutePath())
+                    .apply();
+                createBackupFileLauncher.launch(
+                    filename == null || filename.trim().isEmpty()
+                        ? "evolve-backup.json"
+                        : filename
+                );
+            } catch (java.io.IOException e) {
+                Log.e(TAG, "Failed to prepare backup file", e);
+                Toast.makeText(this, "Could not prepare backup file", Toast.LENGTH_LONG).show();
+            }
         });
     }
 
     private void writeBackupFile(Uri uri) {
+        String path = getPreferences(MODE_PRIVATE).getString("pendingBackupFile", null);
+        getPreferences(MODE_PRIVATE).edit().remove("pendingBackupFile").apply();
+        if (path == null) {
+            return;
+        }
+        java.io.File backupFile = new java.io.File(path);
         if (uri == null) {
-            getPreferences(MODE_PRIVATE).edit().remove("pendingBackup").apply();
+            backupFile.delete();
             return;
         }
-        String json = getPreferences(MODE_PRIVATE).getString("pendingBackup", null);
-        getPreferences(MODE_PRIVATE).edit().remove("pendingBackup").apply();
-        if (json == null) {
-            return;
-        }
-        try (java.io.OutputStream output = getContentResolver().openOutputStream(uri)) {
+        try (java.io.InputStream input = new java.io.FileInputStream(backupFile);
+             java.io.OutputStream output = getContentResolver().openOutputStream(uri)) {
             if (output == null) {
                 throw new java.io.IOException("Unable to open selected backup file");
             }
-            output.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = input.read(buffer)) != -1) {
+                output.write(buffer, 0, bytesRead);
+            }
             Toast.makeText(this, "Backup exported successfully", Toast.LENGTH_SHORT).show();
         } catch (java.io.IOException e) {
             Log.e(TAG, "Failed to write backup file", e);
             Toast.makeText(this, "Could not save backup file", Toast.LENGTH_LONG).show();
+        } finally {
+            backupFile.delete();
         }
     }
 
