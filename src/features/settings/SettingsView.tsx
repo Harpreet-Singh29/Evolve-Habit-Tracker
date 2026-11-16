@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useStore } from '../../store/useStore';
 import { downloadBackup, parseBackup } from '../../lib/backup';
 import { shouldRegisterServiceWorker, isNative } from '../../lib/platform';
@@ -6,6 +6,23 @@ import { Icon } from '../../components/ui';
 
 const APK_URL = 'https://github.com/Harpreet-Singh29/Evolve-Habit-Tracker/releases/latest/download/Evolve.apk';
 const SITE_URL = 'https://evolve-habit-tracker-two.vercel.app';
+
+interface UpdateCheckResult {
+  hasUpdate: boolean;
+  error?: string;
+  latestVersion?: string;
+  downloadUrl?: string;
+  currentVersion?: string;
+}
+
+interface UpdateInfo {
+  checking: boolean;
+  available: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  downloadUrl?: string;
+  error?: string;
+}
 
 export function SettingsView({
   theme,
@@ -27,11 +44,13 @@ export function SettingsView({
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const callbackIdRef = useRef(0);
 
-  const flash = (text: string, ok = true) => {
+  const flash = useCallback((text: string, ok = true) => {
     setMsg({ text, ok });
     window.setTimeout(() => setMsg(null), 3500);
-  };
+  }, []);
 
   const onImport = async (file: File | undefined) => {
     if (!file) return;
@@ -45,6 +64,101 @@ export function SettingsView({
       if (fileRef.current) fileRef.current.value = '';
     }
   };
+
+  // Initialize native update callback handler
+  useEffect(() => {
+    if (!isNative()) return;
+
+    // Set up callback registry on window
+    const win = window as Window & { AndroidUpdateCallbacks?: Record<string, (result: UpdateCheckResult) => void> };
+    win.AndroidUpdateCallbacks = win.AndroidUpdateCallbacks || {};
+
+    // Cleanup on unmount
+    return () => {
+      // Note: We don't clear the registry as other components might use it
+    };
+  }, []);
+
+  const handleCheckUpdates = useCallback(() => {
+    if (!isNative() || !window.Android?.checkForUpdates) {
+      setUpdateInfo({
+        checking: false,
+        available: false,
+        currentVersion: '0.2.5',
+        latestVersion: '',
+        error: 'Native update check not available (running in browser?)'
+      });
+      return;
+    }
+
+    const callbackId = `updateCheck_${Date.now()}_${++callbackIdRef.current}`;
+    
+    // Register callback
+    const win = window as Window & { AndroidUpdateCallbacks?: Record<string, (result: UpdateCheckResult) => void> };
+    win.AndroidUpdateCallbacks![callbackId] = (result: UpdateCheckResult) => {
+      delete win.AndroidUpdateCallbacks![callbackId];
+      
+      if (result.error === 'already_latest') {
+        setUpdateInfo({
+          checking: false,
+          available: false,
+          currentVersion: result.currentVersion || '0.2.5',
+          latestVersion: result.latestVersion || '0.2.5',
+          error: undefined
+        });
+      } else if (result.error) {
+        setUpdateInfo({
+          checking: false,
+          available: false,
+          currentVersion: result.currentVersion || '0.2.5',
+          latestVersion: '',
+          error: result.error
+        });
+      } else {
+        setUpdateInfo({
+          checking: false,
+          available: result.hasUpdate === true,
+          currentVersion: result.currentVersion || '0.2.5',
+          latestVersion: result.latestVersion || '',
+          downloadUrl: result.downloadUrl,
+          error: undefined
+        });
+      }
+    };
+
+    setUpdateInfo({
+      checking: true,
+      available: false,
+      currentVersion: '',
+      latestVersion: ''
+    });
+
+    // Get current version from native
+    const currentVersion = window.Android.getCurrentVersion?.() || '0.2.5';
+    
+    setUpdateInfo(prev => prev ? { ...prev, currentVersion, checking: true } : {
+      checking: true,
+      available: false,
+      currentVersion,
+      latestVersion: ''
+    });
+
+    // Call native checkForUpdates
+    window.Android.checkForUpdates(callbackId);
+  }, []);
+
+  const handleDownloadAndInstall = useCallback(() => {
+    if (!isNative() || !window.Android?.downloadAndInstallApk) {
+      flash('Native download not available', false);
+      return;
+    }
+
+    if (updateInfo?.downloadUrl && updateInfo?.latestVersion) {
+      window.Android.downloadAndInstallApk(updateInfo.downloadUrl, updateInfo.latestVersion);
+      flash(`Downloading Evolve ${updateInfo.latestVersion}...`);
+      setUpdateInfo(prev => prev ? { ...prev, checking: true } : null);
+    }
+  }, [updateInfo, flash]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -120,6 +234,53 @@ export function SettingsView({
         </p>
       </section>
 
+      {/* App Updates */}
+      <section className="card">
+        <h2 className="mb-3 font-semibold">App Updates</h2>
+        <p className="muted mt-1 text-sm">
+          Check for native Android app updates. The web version updates automatically on each launch.
+        </p>
+        
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button 
+            className="btn btn-primary flex-1" 
+            onClick={handleCheckUpdates}
+            disabled={updateInfo?.checking}
+          >
+            <Icon name={updateInfo?.checking ? 'loader' : 'refresh-cw'} className={updateInfo?.checking ? 'animate-spin' : ''} />
+            {updateInfo?.checking ? 'Checking...' : 'Check for Updates'}
+          </button>
+        </div>
+
+        {updateInfo && !updateInfo.checking && (
+          <div className="mt-3 p-3 rounded bg-muted/50">
+            <p className="text-sm">
+              <strong>Current:</strong> v{updateInfo.currentVersion}
+              {updateInfo.latestVersion && (
+                <>
+                  <span className="mx-2">→</span>
+                  <strong>Latest:</strong> v{updateInfo.latestVersion}
+                </>
+              )}
+            </p>
+            {updateInfo.error && updateInfo.error !== 'already_latest' && (
+              <p className="text-sm text-red-500 mt-1">Error: {updateInfo.error}</p>
+            )}
+            {updateInfo.available && updateInfo.downloadUrl && (
+              <button className="btn btn-primary mt-2 w-full" onClick={handleDownloadAndInstall}>
+                <Icon name="download" /> Download &amp; Install v{updateInfo.latestVersion}
+              </button>
+            )}
+            {!updateInfo.available && !updateInfo.error && (
+              <p className="text-sm text-green-500 mt-1">✓ You're on the latest version!</p>
+            )}
+            {updateInfo.error === 'already_latest' && (
+              <p className="text-sm text-green-500 mt-1">✓ You're on the latest version (v{updateInfo.latestVersion})</p>
+            )}
+          </div>
+        )}
+      </section>
+
       {/* Privacy */}
       <section className="card">
         <h2 className="mb-2 font-semibold">Privacy</h2>
@@ -148,7 +309,7 @@ export function SettingsView({
         </button>
       </section>
 
-      <p className="muted text-center text-xs">Evolve v0.1.0 · {habits.length} habits · {entries.length} check-ins</p>
+      <p className="muted text-center text-xs">Evolve v0.2.5 · {habits.length} habits · {entries.length} check-ins</p>
     </div>
   );
 }

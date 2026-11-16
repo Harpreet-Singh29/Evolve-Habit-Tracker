@@ -1,13 +1,20 @@
 package com.harpreetsingh29.habittracker;
 
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -15,6 +22,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.FileProvider;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
@@ -25,15 +33,34 @@ import com.getcapacitor.Plugin;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends BridgeActivity {
     
     private static final String TAG = "EvolveMainActivity";
     private ActivityResultLauncher<String> createBackupFileLauncher;
     
+    // GitHub API constants
+    private static final String GITHUB_API_URL = "https://api.github.com/repos/Harpreet-Singh29/Evolve-Habit-Tracker/releases/latest";
+    private static final String GITHUB_REPO = "Harpreet-Singh29/Evolve-Habit-Tracker";
+    
+    // Download tracking
+    private long currentDownloadId = -1;
+    private String pendingVersionName = null;
+    private BroadcastReceiver downloadCompleteReceiver;
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    
+    // JS Callback storage
+    private String pendingUpdateCheckCallback = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,15 +70,310 @@ public class MainActivity extends BridgeActivity {
         );
         configureSystemBars();
         
+        // Register download complete receiver
+        registerDownloadReceiver();
+        
         // Add JavaScript interface for dynamic icon updates
         // This must be done after super.onCreate() initializes the bridge
         if (getBridge() != null && getBridge().getWebView() != null) {
             WebView webView = getBridge().getWebView();
             webView.addJavascriptInterface(this, "Android");
-            Log.d(TAG, "Added JavaScript interface 'Android' for dynamic icon");
+            Log.d(TAG, "Added JavaScript interface 'Android' for dynamic icon and updates");
         }
     }
     
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (downloadCompleteReceiver != null) {
+            try {
+                unregisterReceiver(downloadCompleteReceiver);
+            } catch (IllegalArgumentException e) {
+                // Receiver not registered, ignore
+            }
+        }
+        executorService.shutdown();
+    }
+    
+    /**
+     * Register BroadcastReceiver for DownloadManager completion.
+     */
+    private void registerDownloadReceiver() {
+        downloadCompleteReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                if (downloadId == currentDownloadId) {
+                    onDownloadComplete(downloadId);
+                }
+            }
+        };
+        registerReceiver(downloadCompleteReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+    }
+    
+    /**
+     * Get current app version from BuildConfig.
+     */
+    @JavascriptInterface
+    public String getCurrentVersion() {
+        return BuildConfig.VERSION_NAME;
+    }
+    
+    /**
+     * Get current version code from BuildConfig.
+     */
+    @JavascriptInterface
+    public int getCurrentVersionCode() {
+        return BuildConfig.VERSION_CODE;
+    }
+    
+    /**
+     * Check for updates from GitHub Releases.
+     * Called from JavaScript with a callback function name.
+     * @param callbackId Unique identifier for the callback
+     */
+    @JavascriptInterface
+    public void checkForUpdates(String callbackId) {
+        Log.d(TAG, "checkForUpdates called from JS with callbackId: " + callbackId);
+        this.pendingUpdateCheckCallback = callbackId;
+        
+        executorService.execute(() -> {
+            try {
+                // Fetch latest release from GitHub API
+                URL url = new URL(GITHUB_API_URL);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
+                conn.setRequestProperty("User-Agent", "Evolve-Android-App");
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(10000);
+                
+                int responseCode = conn.getResponseCode();
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    sendUpdateCheckResult(false, "GitHub API error: " + responseCode, null, null);
+                    return;
+                }
+                
+                // Read response
+                StringBuilder response = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                }
+                
+                // Parse JSON
+                JSONObject release = new JSONObject(response.toString());
+                String tagName = release.optString("tag_name", "");
+                String latestVersion = tagName.replaceFirst("^v", ""); // Remove 'v' prefix
+                
+                // Find APK asset
+                String downloadUrl = null;
+                if (release.has("assets")) {
+                    org.json.JSONArray assets = release.getJSONArray("assets");
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject asset = assets.getJSONObject(i);
+                        String name = asset.optString("name", "");
+                        if (name.endsWith(".apk")) {
+                            downloadUrl = asset.optString("browser_download_url", null);
+                            break;
+                        }
+                    }
+                }
+                
+                if (downloadUrl == null) {
+                    sendUpdateCheckResult(false, "No APK asset found in latest release", null, null);
+                    return;
+                }
+                
+                // Compare versions
+                String currentVersion = BuildConfig.VERSION_NAME;
+                int comparison = compareVersions(currentVersion, latestVersion);
+                
+                if (comparison < 0) {
+                    // Update available
+                    sendUpdateCheckResult(true, null, latestVersion, downloadUrl);
+                } else {
+                    // Already up to date
+                    sendUpdateCheckResult(false, "already_latest", latestVersion, null);
+                }
+                
+            } catch (Exception e) {
+                Log.e(TAG, "Error checking for updates", e);
+                sendUpdateCheckResult(false, "Error: " + e.getMessage(), null, null);
+            }
+        });
+    }
+    
+    /**
+     * Send update check result back to JavaScript.
+     */
+    private void sendUpdateCheckResult(boolean hasUpdate, String error, String latestVersion, String downloadUrl) {
+        String callbackId = pendingUpdateCheckCallback;
+        pendingUpdateCheckCallback = null;
+        
+        if (callbackId == null) {
+            Log.w(TAG, "No pending callback for update check result");
+            return;
+        }
+        
+        JSONObject result = new JSONObject();
+        try {
+            result.put("hasUpdate", hasUpdate);
+            if (error != null) {
+                result.put("error", error);
+            }
+            if (latestVersion != null) {
+                result.put("latestVersion", latestVersion);
+            }
+            if (downloadUrl != null) {
+                result.put("downloadUrl", downloadUrl);
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "Error creating result JSON", e);
+        }
+        
+        final String jsCallback = "window.AndroidUpdateCallbacks && window.AndroidUpdateCallbacks['" + callbackId + "']";
+        final String jsResult = result.toString();
+        
+        runOnUiThread(() -> {
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                getBridge().getWebView().evaluateJavascript(
+                    jsCallback + " && " + jsCallback + "(" + jsResult + ")",
+                    r -> Log.d(TAG, "Update check callback result: " + r)
+                );
+            }
+        });
+    }
+    
+    /**
+     * Download and install APK using DownloadManager.
+     * @param downloadUrl Direct URL to the APK file
+     * @param versionName Version name for notification
+     */
+    @JavascriptInterface
+    public void downloadAndInstallApk(String downloadUrl, String versionName) {
+        Log.d(TAG, "downloadAndInstallApk called: " + downloadUrl + " version: " + versionName);
+        
+        if (downloadUrl == null || downloadUrl.isEmpty()) {
+            Log.e(TAG, "Invalid download URL");
+            runOnUiThread(() -> Toast.makeText(this, "Invalid download URL", Toast.LENGTH_LONG).show());
+            return;
+        }
+        
+        this.pendingVersionName = versionName;
+        
+        runOnUiThread(() -> {
+            try {
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadUrl))
+                    .setTitle("Evolve " + versionName)
+                    .setDescription("Downloading update...")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, "Evolve-" + versionName + ".apk")
+                    .setMimeType("application/vnd.android.package-archive")
+                    .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
+                    .setAllowedOverRoaming(false);
+                
+                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                if (dm != null) {
+                    currentDownloadId = dm.enqueue(request);
+                    Log.d(TAG, "Download enqueued with ID: " + currentDownloadId);
+                    Toast.makeText(this, "Downloading Evolve " + versionName + "...", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.e(TAG, "DownloadManager service not available");
+                    Toast.makeText(this, "Download service unavailable", Toast.LENGTH_LONG).show();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error starting download", e);
+                Toast.makeText(this, "Failed to start download: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+    
+    /**
+     * Handle download completion - launch install intent.
+     */
+    private void onDownloadComplete(long downloadId) {
+        Log.d(TAG, "Download complete for ID: " + downloadId);
+        
+        DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+        if (dm == null) {
+            Log.e(TAG, "DownloadManager not available");
+            return;
+        }
+        
+        DownloadManager.Query query = new DownloadManager.Query().setFilterById(downloadId);
+        try (Cursor cursor = dm.query(query)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                int uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
+                
+                if (statusIndex >= 0 && uriIndex >= 0) {
+                    int status = cursor.getInt(statusIndex);
+                    String localUri = cursor.getString(uriIndex);
+                    
+                    if (status == DownloadManager.STATUS_SUCCESSFUL && localUri != null) {
+                        Log.d(TAG, "Download successful, file: " + localUri);
+                        installApk(Uri.parse(localUri));
+                    } else if (status == DownloadManager.STATUS_FAILED) {
+                        int reasonIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+                        int reason = reasonIndex >= 0 ? cursor.getInt(reasonIndex) : 0;
+                        Log.e(TAG, "Download failed, reason: " + reason);
+                        runOnUiThread(() -> Toast.makeText(this, "Download failed (code: " + reason + ")", Toast.LENGTH_LONG).show());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error querying download status", e);
+        } finally {
+            currentDownloadId = -1;
+            pendingVersionName = null;
+        }
+    }
+    
+    /**
+     * Launch system installer for the downloaded APK.
+     */
+    private void installApk(Uri fileUri) {
+        try {
+            // Use FileProvider for Android 7.0+ (API 24+)
+            Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+            intent.setData(fileUri);
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.putExtra(Intent.EXTRA_RETURN_RESULT, true);
+            
+            // For older Android versions, also try ACTION_VIEW
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                intent.setAction(Intent.ACTION_VIEW);
+                intent.setDataAndType(fileUri, "application/vnd.android.package-archive");
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+            
+            startActivityForResult(intent, 12345); // Request code for install result
+            Log.d(TAG, "Launched install intent for: " + fileUri);
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error launching install intent", e);
+            runOnUiThread(() -> Toast.makeText(this, "Could not open installer: " + e.getMessage(), Toast.LENGTH_LONG).show());
+        }
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 12345) {
+            if (resultCode == RESULT_OK) {
+                Log.d(TAG, "APK installed successfully");
+                Toast.makeText(this, "Evolve updated! Please restart the app.", Toast.LENGTH_LONG).show();
+            } else if (resultCode == RESULT_CANCELED) {
+                Log.d(TAG, "APK install cancelled by user");
+                Toast.makeText(this, "Update cancelled", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.d(TAG, "APK install result: " + resultCode);
+            }
+        }
+    }
+
     /**
      * Draw the WebView behind the system bars and keep navigation-bar icons
      * readable against Evolve's current web theme. The WebView CSS supplies the
@@ -284,6 +606,37 @@ public class MainActivity extends BridgeActivity {
             setEnabledAlias(context, iconState);
         } catch (Exception e) {
             Log.e(TAG, "Error updating icon from plugin", e);
+        }
+    }
+    
+    /**
+     * Compare two semantic version strings.
+     * Returns -1 if v1 < v2, 0 if equal, 1 if v1 > v2.
+     */
+    private int compareVersions(String v1, String v2) {
+        if (v1 == null || v2 == null) return 0;
+        
+        // Strip 'v' prefix if present
+        v1 = v1.replaceFirst("^v", "");
+        v2 = v2.replaceFirst("^v", "");
+        
+        String[] parts1 = v1.split("\\.");
+        String[] parts2 = v2.split("\\.");
+        
+        int maxLen = Math.max(parts1.length, parts2.length);
+        for (int i = 0; i < maxLen; i++) {
+            int n1 = i < parts1.length ? parseIntSafe(parts1[i]) : 0;
+            int n2 = i < parts2.length ? parseIntSafe(parts2[i]) : 0;
+            if (n1 != n2) return Integer.compare(n1, n2);
+        }
+        return 0;
+    }
+    
+    private int parseIntSafe(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return 0;
         }
     }
 }

@@ -28,6 +28,11 @@ declare global {
       updateIconState: (state: string) => void;
       setAppTheme: (theme: 'dark' | 'light') => void;
       exportBackup: (json: string, filename: string) => void;
+      // Update feature
+      getCurrentVersion: () => string;
+      getCurrentVersionCode: () => number;
+      checkForUpdates: (callbackId: string) => void;
+      downloadAndInstallApk: (downloadUrl: string, versionName: string) => void;
     };
     EvolveNative?: {
       requestIconUpdate: () => void;
@@ -35,7 +40,16 @@ declare global {
     Capacitor?: {
       getPlatform: () => string;
     };
+    AndroidUpdateCallbacks?: Record<string, (result: UpdateCheckResult) => void>;
   }
+}
+
+interface UpdateCheckResult {
+  hasUpdate: boolean;
+  error?: string;
+  latestVersion?: string;
+  downloadUrl?: string;
+  currentVersion?: string;
 }
 
 const TAB_KEYS: Record<string, Tab> = {
