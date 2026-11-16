@@ -212,7 +212,10 @@ export function SettingsView({
         <p className="muted mt-2 text-xs">Import replaces the current data on this device.</p>
       </section>
 
-      {/* Get the app */}
+      {/* Get the app — website/PWA only. Inside the APK it is redundant:
+          the user is already running the app, and updates are handled by the
+          App Updates card above. isNative() is true in the Capacitor WebView. */}
+      {!isNative() && (
       <section className="card">
         <h2 className="mb-3 font-semibold">Get Evolve</h2>
         <div className="flex flex-col gap-2">
@@ -237,6 +240,7 @@ export function SettingsView({
           separate — use Export/Import to copy habits between them.
         </p>
       </section>
+      )}
 
       {/* App Updates */}
       <section className="card">
