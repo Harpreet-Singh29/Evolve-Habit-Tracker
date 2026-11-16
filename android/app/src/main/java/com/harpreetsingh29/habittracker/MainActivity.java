@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -220,6 +221,7 @@ public class MainActivity extends BridgeActivity {
         JSONObject result = new JSONObject();
         try {
             result.put("hasUpdate", hasUpdate);
+            result.put("currentVersion", BuildConfig.VERSION_NAME);
             if (error != null) {
                 result.put("error", error);
             }
@@ -304,24 +306,24 @@ public class MainActivity extends BridgeActivity {
         
         DownloadManager.Query query = new DownloadManager.Query().setFilterById(downloadId);
         try (Cursor cursor = dm.query(query)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+            if (cursor == null || !cursor.moveToFirst()) {
+                Log.e(TAG, "No download row found for ID: " + downloadId);
+                return;
+            }
+
+            int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+            int status = statusIndex >= 0 ? cursor.getInt(statusIndex) : -1;
+
+            if (status == DownloadManager.STATUS_SUCCESSFUL) {
                 int uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
-                
-                if (statusIndex >= 0 && uriIndex >= 0) {
-                    int status = cursor.getInt(statusIndex);
-                    String localUri = cursor.getString(uriIndex);
-                    
-                    if (status == DownloadManager.STATUS_SUCCESSFUL && localUri != null) {
-                        Log.d(TAG, "Download successful, file: " + localUri);
-                        installApk(Uri.parse(localUri));
-                    } else if (status == DownloadManager.STATUS_FAILED) {
-                        int reasonIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
-                        int reason = reasonIndex >= 0 ? cursor.getInt(reasonIndex) : 0;
-                        Log.e(TAG, "Download failed, reason: " + reason);
-                        runOnUiThread(() -> Toast.makeText(this, "Download failed (code: " + reason + ")", Toast.LENGTH_LONG).show());
-                    }
-                }
+                String localUri = uriIndex >= 0 ? cursor.getString(uriIndex) : null;
+                Log.d(TAG, "Download successful, file: " + localUri);
+                installApk(dm, downloadId, localUri);
+            } else if (status == DownloadManager.STATUS_FAILED) {
+                int reasonIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+                int reason = reasonIndex >= 0 ? cursor.getInt(reasonIndex) : 0;
+                Log.e(TAG, "Download failed, reason: " + reason);
+                runOnUiThread(() -> Toast.makeText(this, "Download failed (code: " + reason + ")", Toast.LENGTH_LONG).show());
             }
         } catch (Exception e) {
             Log.e(TAG, "Error querying download status", e);
@@ -332,45 +334,59 @@ public class MainActivity extends BridgeActivity {
     }
     
     /**
-     * Launch system installer for the downloaded APK.
+     * Launch the system installer for the downloaded APK.
+     *
+     * The APK is exposed through FileProvider: passing a file:// URI to the
+     * installer throws FileUriExposedException on Android 7+ and is rejected
+     * outright by newer package installers.
      */
-    private void installApk(Uri fileUri) {
-        try {
-            // Use FileProvider for Android 7.0+ (API 24+)
-            Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-            intent.setData(fileUri);
-            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.putExtra(Intent.EXTRA_RETURN_RESULT, true);
-            
-            // For older Android versions, also try ACTION_VIEW
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                intent.setAction(Intent.ACTION_VIEW);
-                intent.setDataAndType(fileUri, "application/vnd.android.package-archive");
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    private void installApk(DownloadManager dm, long downloadId, String localUri) {
+        Uri apkUri = null;
+
+        if (localUri != null && localUri.startsWith("file:")) {
+            try {
+                java.io.File apkFile = new java.io.File(Uri.parse(localUri).getPath());
+                apkUri = FileProvider.getUriForFile(
+                    this, getPackageName() + ".fileprovider", apkFile);
+            } catch (Exception e) {
+                Log.e(TAG, "Could not build FileProvider URI", e);
             }
-            
-            startActivityForResult(intent, 12345); // Request code for install result
-            Log.d(TAG, "Launched install intent for: " + fileUri);
-            
+        }
+        if (apkUri == null) {
+            apkUri = dm.getUriForDownloadedFile(downloadId);
+        }
+        if (apkUri == null) {
+            runOnUiThread(() -> Toast.makeText(this, "Downloaded file not found", Toast.LENGTH_LONG).show());
+            return;
+        }
+
+        // Android 8+ only lets an app install packages if the user granted
+        // "Install unknown apps" for it. Send them straight to that setting.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            && !getPackageManager().canRequestPackageInstalls()) {
+            final Uri settingsUri = Uri.parse("package:" + getPackageName());
+            runOnUiThread(() -> {
+                Toast.makeText(this,
+                    "Allow Evolve to install unknown apps, then try again",
+                    Toast.LENGTH_LONG).show();
+                try {
+                    startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, settingsUri));
+                } catch (Exception e) {
+                    Log.e(TAG, "Could not open unknown-sources settings", e);
+                }
+            });
+            return;
+        }
+
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            Log.d(TAG, "Launched installer for: " + apkUri);
         } catch (Exception e) {
             Log.e(TAG, "Error launching install intent", e);
             runOnUiThread(() -> Toast.makeText(this, "Could not open installer: " + e.getMessage(), Toast.LENGTH_LONG).show());
-        }
-    }
-    
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 12345) {
-            if (resultCode == RESULT_OK) {
-                Log.d(TAG, "APK installed successfully");
-                Toast.makeText(this, "Evolve updated! Please restart the app.", Toast.LENGTH_LONG).show();
-            } else if (resultCode == RESULT_CANCELED) {
-                Log.d(TAG, "APK install cancelled by user");
-                Toast.makeText(this, "Update cancelled", Toast.LENGTH_SHORT).show();
-            } else {
-                Log.d(TAG, "APK install result: " + resultCode);
-            }
         }
     }
 

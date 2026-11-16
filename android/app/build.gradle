@@ -44,6 +44,12 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // AGP 8+ does not generate BuildConfig by default. MainActivity reads
+    // BuildConfig.VERSION_NAME / VERSION_CODE for the in-app update checker.
+    buildFeatures {
+        buildConfig true
+    }
+
     buildTypes {
         release {
             minifyEnabled false
