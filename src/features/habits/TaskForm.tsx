@@ -20,11 +20,14 @@ export function TaskForm({
   onClose,
   onSave,
   initial,
+  initialDate,
 }: {
   open: boolean;
   onClose: () => void;
   onSave: (draft: TaskDraft) => void;
   initial?: Task | null;
+  /** Prefill the date when adding from a specific day (weekly agenda). */
+  initialDate?: string | null;
 }) {
   const [draft, setDraft] = useState<TaskDraft>(emptyDraft);
 
@@ -37,9 +40,9 @@ export function TaskForm({
             dueDate: initial.dueDate,
             dueTime: initial.dueTime ?? '',
           }
-        : emptyDraft(),
+        : { ...emptyDraft(), dueDate: initialDate || getTodayLocal() },
     );
-  }, [open, initial]);
+  }, [open, initial, initialDate]);
 
   const set = <K extends keyof TaskDraft>(k: K, v: TaskDraft[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));
@@ -74,7 +77,8 @@ export function TaskForm({
             type="date"
             value={draft.dueDate}
             onChange={(e) => set('dueDate', e.target.value)}
-            min={getTodayLocal()}
+            // Editing an existing task or adding from the agenda may target a past day.
+            min={initial || initialDate ? undefined : getTodayLocal()}
           />
         </div>
 

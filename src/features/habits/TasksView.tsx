@@ -3,9 +3,11 @@ import { useStore } from '../../store/useStore';
 import { formatDate, getTodayLocal } from '../../lib/dates';
 import { EmptyState, Icon } from '../../components/ui';
 import { TaskForm } from './TaskForm';
+import { WeekAgenda } from './WeekAgenda';
 import type { Task } from '../../types';
 
 type Filter = 'today' | 'upcoming' | 'overdue' | 'all';
+type View = 'list' | 'week';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'today', label: 'Today' },
@@ -13,6 +15,16 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'overdue', label: 'Overdue' },
   { id: 'all', label: 'All' },
 ];
+
+const VIEW_STORAGE_KEY = 'evolve-tasks-view';
+
+function loadView(): View {
+  try {
+    return window.localStorage.getItem(VIEW_STORAGE_KEY) === 'week' ? 'week' : 'list';
+  } catch {
+    return 'list';
+  }
+}
 
 function isOverdue(task: { dueDate: string; done: boolean }, today: string): boolean {
   return !task.done && task.dueDate < today;
@@ -32,6 +44,7 @@ export function TasksView() {
   const updateTask = useStore((s) => s.updateTask);
   const deleteTask = useStore((s) => s.deleteTask);
   const [filter, setFilter] = useState<Filter>('today');
+  const [view, setView] = useState<View>(loadView);
   const [editing, setEditing] = useState<Task | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -85,6 +98,56 @@ export function TasksView() {
     closeForm();
   };
 
+  const changeView = (v: View) => {
+    setView(v);
+    try {
+      window.localStorage.setItem(VIEW_STORAGE_KEY, v);
+    } catch {
+      // Ignore storage failures.
+    }
+  };
+
+  const viewToggle = (
+    <div
+      className="flex gap-1 p-1"
+      role="tablist"
+      aria-label="Tasks view"
+      style={{ background: 'var(--control)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)' }}
+    >
+      {(['list', 'week'] as const).map((v) => (
+        <button
+          key={v}
+          role="tab"
+          aria-selected={view === v}
+          className={`tap flex flex-1 items-center justify-center gap-1.5 py-1.5 text-sm font-medium ${view === v ? '' : 'muted'}`}
+          style={
+            view === v
+              ? { background: 'var(--surface-3)', borderRadius: 'var(--r-md)', boxShadow: 'var(--shadow-sm)', color: 'var(--text)' }
+              : undefined
+          }
+          onClick={() => changeView(v)}
+        >
+          <Icon name={v === 'list' ? 'tasks' : 'calendar'} className="h-4 w-4" />
+          {v === 'list' ? 'List' : 'Week'}
+        </button>
+      ))}
+    </div>
+  );
+
+  // Weekly agenda replaces the list entirely (one week, seven day rows).
+  if (view === 'week') {
+    return (
+      <div className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Tasks</h1>
+          <p className="muted text-sm">One week at a time · Monday to Sunday</p>
+        </div>
+        {viewToggle}
+        <WeekAgenda />
+      </div>
+    );
+  }
+
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col gap-5">
@@ -95,6 +158,7 @@ export function TasksView() {
           </div>
           <button className="btn btn-primary" onClick={openNew}><Icon name="plus" /> Add</button>
         </div>
+        {viewToggle}
         <EmptyState
           icon="tasks"
           title="No tasks yet"
@@ -117,6 +181,8 @@ export function TasksView() {
         </div>
         <button className="btn btn-primary" onClick={openNew}><Icon name="plus" /> Add</button>
       </div>
+
+      {viewToggle}
 
       <div className="flex gap-1 overflow-x-auto pb-2" role="tablist">
         {FILTERS.map((f) => (
