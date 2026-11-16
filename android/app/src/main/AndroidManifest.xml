@@ -63,6 +63,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Required for installing APKs on Android 8.0+ (API 26+) -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- NOTE: deliberately no REQUEST_INSTALL_PACKAGES. Play Protect flags
+         APKs that can install their own downloads, so updates are delivered
+         by opening the GitHub release in the user's browser instead. -->
 </manifest>

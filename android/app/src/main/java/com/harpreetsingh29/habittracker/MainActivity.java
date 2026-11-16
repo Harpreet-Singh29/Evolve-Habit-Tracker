@@ -1,21 +1,15 @@
 package com.harpreetsingh29.habittracker;
 
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.Settings;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -23,7 +17,6 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.core.content.FileProvider;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
@@ -53,10 +46,9 @@ public class MainActivity extends BridgeActivity {
     private static final String GITHUB_API_URL = "https://api.github.com/repos/Harpreet-Singh29/Evolve-Habit-Tracker/releases/latest";
     private static final String GITHUB_REPO = "Harpreet-Singh29/Evolve-Habit-Tracker";
     
-    // Download tracking
-    private long currentDownloadId = -1;
-    private String pendingVersionName = null;
-    private BroadcastReceiver downloadCompleteReceiver;
+    // Update checking (no native APK download/install — Play Protect flags
+    // apps that install their own updates; updates are fetched in the browser
+    // instead. See openInBrowser().)
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     
     // JS Callback storage
@@ -71,9 +63,6 @@ public class MainActivity extends BridgeActivity {
         );
         configureSystemBars();
         
-        // Register download complete receiver
-        registerDownloadReceiver();
-        
         // Add JavaScript interface for dynamic icon updates
         // This must be done after super.onCreate() initializes the bridge
         if (getBridge() != null && getBridge().getWebView() != null) {
@@ -86,30 +75,46 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (downloadCompleteReceiver != null) {
-            try {
-                unregisterReceiver(downloadCompleteReceiver);
-            } catch (IllegalArgumentException e) {
-                // Receiver not registered, ignore
-            }
-        }
         executorService.shutdown();
     }
     
     /**
-     * Register BroadcastReceiver for DownloadManager completion.
+     * Open a URL in the user's default browser.
+     *
+     * Used to fetch a new APK from the GitHub release. Updates are downloaded
+     * and installed by the user through the browser on purpose: Play Protect
+     * flags apps that declare REQUEST_INSTALL_PACKAGES and download their own
+     * updates, so this app deliberately keeps no install-package code.
+     * @param url HTTPS URL to open
      */
-    private void registerDownloadReceiver() {
-        downloadCompleteReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-                if (downloadId == currentDownloadId) {
-                    onDownloadComplete(downloadId);
-                }
+    @JavascriptInterface
+    public void openInBrowser(String url) {
+        Log.d(TAG, "openInBrowser called: " + url);
+        if (url == null || url.trim().isEmpty()) {
+            Log.w(TAG, "openInBrowser called with empty URL");
+            return;
+        }
+        try {
+            Uri uri = Uri.parse(url.trim());
+            // Only ever hand HTTPS URLs to the browser from the JS bridge.
+            if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                Log.e(TAG, "openInBrowser rejected non-HTTPS URL");
+                runOnUiThread(() -> Toast.makeText(this, "Only secure (https) links can be opened", Toast.LENGTH_SHORT).show());
+                return;
             }
-        };
-        registerReceiver(downloadCompleteReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            runOnUiThread(() -> {
+                try {
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "No browser available", e);
+                    Toast.makeText(this, "Could not open a browser", Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "openInBrowser failed", e);
+        }
     }
     
     /**
@@ -248,148 +253,6 @@ public class MainActivity extends BridgeActivity {
         });
     }
     
-    /**
-     * Download and install APK using DownloadManager.
-     * @param downloadUrl Direct URL to the APK file
-     * @param versionName Version name for notification
-     */
-    @JavascriptInterface
-    public void downloadAndInstallApk(String downloadUrl, String versionName) {
-        Log.d(TAG, "downloadAndInstallApk called: " + downloadUrl + " version: " + versionName);
-        
-        if (downloadUrl == null || downloadUrl.isEmpty()) {
-            Log.e(TAG, "Invalid download URL");
-            runOnUiThread(() -> Toast.makeText(this, "Invalid download URL", Toast.LENGTH_LONG).show());
-            return;
-        }
-        
-        this.pendingVersionName = versionName;
-        
-        runOnUiThread(() -> {
-            try {
-                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadUrl))
-                    .setTitle("Evolve " + versionName)
-                    .setDescription("Downloading update...")
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, "Evolve-" + versionName + ".apk")
-                    .setMimeType("application/vnd.android.package-archive")
-                    .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
-                    .setAllowedOverRoaming(false);
-                
-                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-                if (dm != null) {
-                    currentDownloadId = dm.enqueue(request);
-                    Log.d(TAG, "Download enqueued with ID: " + currentDownloadId);
-                    Toast.makeText(this, "Downloading Evolve " + versionName + "...", Toast.LENGTH_SHORT).show();
-                } else {
-                    Log.e(TAG, "DownloadManager service not available");
-                    Toast.makeText(this, "Download service unavailable", Toast.LENGTH_LONG).show();
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error starting download", e);
-                Toast.makeText(this, "Failed to start download: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-    
-    /**
-     * Handle download completion - launch install intent.
-     */
-    private void onDownloadComplete(long downloadId) {
-        Log.d(TAG, "Download complete for ID: " + downloadId);
-        
-        DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-        if (dm == null) {
-            Log.e(TAG, "DownloadManager not available");
-            return;
-        }
-        
-        DownloadManager.Query query = new DownloadManager.Query().setFilterById(downloadId);
-        try (Cursor cursor = dm.query(query)) {
-            if (cursor == null || !cursor.moveToFirst()) {
-                Log.e(TAG, "No download row found for ID: " + downloadId);
-                return;
-            }
-
-            int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
-            int status = statusIndex >= 0 ? cursor.getInt(statusIndex) : -1;
-
-            if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                int uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
-                String localUri = uriIndex >= 0 ? cursor.getString(uriIndex) : null;
-                Log.d(TAG, "Download successful, file: " + localUri);
-                installApk(dm, downloadId, localUri);
-            } else if (status == DownloadManager.STATUS_FAILED) {
-                int reasonIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
-                int reason = reasonIndex >= 0 ? cursor.getInt(reasonIndex) : 0;
-                Log.e(TAG, "Download failed, reason: " + reason);
-                runOnUiThread(() -> Toast.makeText(this, "Download failed (code: " + reason + ")", Toast.LENGTH_LONG).show());
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error querying download status", e);
-        } finally {
-            currentDownloadId = -1;
-            pendingVersionName = null;
-        }
-    }
-    
-    /**
-     * Launch the system installer for the downloaded APK.
-     *
-     * The APK is exposed through FileProvider: passing a file:// URI to the
-     * installer throws FileUriExposedException on Android 7+ and is rejected
-     * outright by newer package installers.
-     */
-    private void installApk(DownloadManager dm, long downloadId, String localUri) {
-        Uri apkUri = null;
-
-        if (localUri != null && localUri.startsWith("file:")) {
-            try {
-                java.io.File apkFile = new java.io.File(Uri.parse(localUri).getPath());
-                apkUri = FileProvider.getUriForFile(
-                    this, getPackageName() + ".fileprovider", apkFile);
-            } catch (Exception e) {
-                Log.e(TAG, "Could not build FileProvider URI", e);
-            }
-        }
-        if (apkUri == null) {
-            apkUri = dm.getUriForDownloadedFile(downloadId);
-        }
-        if (apkUri == null) {
-            runOnUiThread(() -> Toast.makeText(this, "Downloaded file not found", Toast.LENGTH_LONG).show());
-            return;
-        }
-
-        // Android 8+ only lets an app install packages if the user granted
-        // "Install unknown apps" for it. Send them straight to that setting.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-            && !getPackageManager().canRequestPackageInstalls()) {
-            final Uri settingsUri = Uri.parse("package:" + getPackageName());
-            runOnUiThread(() -> {
-                Toast.makeText(this,
-                    "Allow Evolve to install unknown apps, then try again",
-                    Toast.LENGTH_LONG).show();
-                try {
-                    startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, settingsUri));
-                } catch (Exception e) {
-                    Log.e(TAG, "Could not open unknown-sources settings", e);
-                }
-            });
-            return;
-        }
-
-        try {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            Log.d(TAG, "Launched installer for: " + apkUri);
-        } catch (Exception e) {
-            Log.e(TAG, "Error launching install intent", e);
-            runOnUiThread(() -> Toast.makeText(this, "Could not open installer: " + e.getMessage(), Toast.LENGTH_LONG).show());
-        }
-    }
-
     /**
      * Draw the WebView behind the system bars and keep navigation-bar icons
      * readable against Evolve's current web theme. The WebView CSS supplies the

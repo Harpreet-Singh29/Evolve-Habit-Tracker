@@ -84,7 +84,7 @@ export function SettingsView({
       setUpdateInfo({
         checking: false,
         available: false,
-        currentVersion: '0.2.5',
+        currentVersion: '0.2.8',
         latestVersion: '',
         error: 'Native update check not available (running in browser?)'
       });
@@ -102,15 +102,15 @@ export function SettingsView({
         setUpdateInfo({
           checking: false,
           available: false,
-          currentVersion: result.currentVersion || '0.2.5',
-          latestVersion: result.latestVersion || '0.2.5',
+          currentVersion: result.currentVersion || '0.2.8',
+          latestVersion: result.latestVersion || '0.2.8',
           error: undefined
         });
       } else if (result.error) {
         setUpdateInfo({
           checking: false,
           available: false,
-          currentVersion: result.currentVersion || '0.2.5',
+          currentVersion: result.currentVersion || '0.2.8',
           latestVersion: '',
           error: result.error
         });
@@ -118,7 +118,7 @@ export function SettingsView({
         setUpdateInfo({
           checking: false,
           available: result.hasUpdate === true,
-          currentVersion: result.currentVersion || '0.2.5',
+          currentVersion: result.currentVersion || '0.2.8',
           latestVersion: result.latestVersion || '',
           downloadUrl: result.downloadUrl,
           error: undefined
@@ -134,7 +134,7 @@ export function SettingsView({
     });
 
     // Get current version from native
-    const currentVersion = window.Android.getCurrentVersion?.() || '0.2.5';
+    const currentVersion = window.Android.getCurrentVersion?.() || '0.2.8';
     
     setUpdateInfo(prev => prev ? { ...prev, currentVersion, checking: true } : {
       checking: true,
@@ -147,17 +147,21 @@ export function SettingsView({
     window.Android.checkForUpdates(callbackId);
   }, []);
 
-  const handleDownloadAndInstall = useCallback(() => {
-    if (!isNative() || !window.Android?.downloadAndInstallApk) {
-      flash('Native download not available', false);
+  const handleGetUpdate = useCallback(() => {
+    const url = updateInfo?.downloadUrl;
+    if (!url) {
+      flash('No download URL available', false);
       return;
     }
-
-    if (updateInfo?.downloadUrl && updateInfo?.latestVersion) {
-      window.Android.downloadAndInstallApk(updateInfo.downloadUrl, updateInfo.latestVersion);
-      flash(`Downloading Evolve ${updateInfo.latestVersion}...`);
-      setUpdateInfo(prev => prev ? { ...prev, checking: true } : null);
+    // The native installer was removed in v0.2.8: Play Protect blocks APKs
+    // that download and install their own updates. Hand off to the browser,
+    // where the user downloads the APK and installs it like any sideload.
+    if (isNative() && window.Android?.openInBrowser) {
+      window.Android.openInBrowser(url);
+    } else {
+      window.open(url, '_blank', 'noopener');
     }
+    flash('Opening the release page in your browser. Install the APK when the download finishes.');
   }, [updateInfo, flash]);
 
   return (
@@ -267,9 +271,16 @@ export function SettingsView({
               <p className="text-sm text-red-500 mt-1">Error: {updateInfo.error}</p>
             )}
             {updateInfo.available && updateInfo.downloadUrl && (
-              <button className="btn btn-primary mt-2 w-full" onClick={handleDownloadAndInstall}>
-                <Icon name="download" /> Download &amp; Install v{updateInfo.latestVersion}
-              </button>
+              <>
+                <button className="btn btn-primary mt-2 w-full" onClick={handleGetUpdate}>
+                  <Icon name="download" /> Get v{updateInfo.latestVersion} in browser
+                </button>
+                <p className="muted mt-2 text-xs leading-relaxed">
+                  Opens the APK download in your browser. When it finishes, tap the file to install
+                  it — apps don't self-install updates anymore, because Google Play Protect blocks
+                  APKs that download and install their own updates.
+                </p>
+              </>
             )}
             {!updateInfo.available && !updateInfo.error && (
               <p className="text-sm text-green-500 mt-1">✓ You're on the latest version!</p>
@@ -309,7 +320,7 @@ export function SettingsView({
         </button>
       </section>
 
-      <p className="muted text-center text-xs">Evolve v0.2.5 · {habits.length} habits · {entries.length} check-ins</p>
+      <p className="muted text-center text-xs">Evolve v0.2.8 · {habits.length} habits · {entries.length} check-ins</p>
     </div>
   );
 }
