@@ -205,7 +205,9 @@ export function SettingsView({
         <p className="muted mt-2 text-xs">Import replaces the current data on this device.</p>
       </section>
 
-      {/* App Updates */}
+      {/* App Updates — APK only. In a browser the web app updates itself from
+          the deployed site, so there is nothing to check here. */}
+      {isNative() && (
       <section className="card">
         <h2 className="mb-3 font-semibold">App Updates</h2>
         <p className="muted mt-1 text-sm">
@@ -218,7 +220,7 @@ export function SettingsView({
             onClick={handleCheckUpdates}
             disabled={updateInfo?.checking}
           >
-            <Icon name={updateInfo?.checking ? 'loader' : 'refresh-cw'} className={updateInfo?.checking ? 'animate-spin' : ''} />
+            <Icon name={updateInfo?.checking ? 'loader' : 'refresh-cw'} className={updateInfo?.checking ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
             {updateInfo?.checking ? 'Checking...' : 'Check for Updates'}
           </button>
         </div>
@@ -258,6 +260,7 @@ export function SettingsView({
           </div>
         )}
       </section>
+      )}
 
       {/* Privacy */}
       <section className="card">
