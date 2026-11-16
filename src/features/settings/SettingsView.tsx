@@ -1,11 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useStore } from '../../store/useStore';
 import { downloadBackup, parseBackup } from '../../lib/backup';
-import { shouldRegisterServiceWorker, isNative } from '../../lib/platform';
+import { isNative } from '../../lib/platform';
 import { Icon } from '../../components/ui';
-
-const APK_URL = 'https://github.com/Harpreet-Singh29/Evolve-Habit-Tracker/releases/latest/download/Evolve.apk';
-const SITE_URL = 'https://evolve-habit-tracker-two.vercel.app';
 
 interface UpdateCheckResult {
   hasUpdate: boolean;
@@ -27,13 +24,9 @@ interface UpdateInfo {
 export function SettingsView({
   theme,
   onToggleTheme,
-  onInstall,
-  canInstall,
 }: {
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
-  onInstall: () => void;
-  canInstall: boolean;
 }) {
   const habits = useStore((s) => s.habits);
   const entries = useStore((s) => s.entries);
@@ -211,36 +204,6 @@ export function SettingsView({
         </div>
         <p className="muted mt-2 text-xs">Import replaces the current data on this device.</p>
       </section>
-
-      {/* Get the app — website/PWA only. Inside the APK it is redundant:
-          the user is already running the app, and updates are handled by the
-          App Updates card above. isNative() is true in the Capacitor WebView. */}
-      {!isNative() && (
-      <section className="card">
-        <h2 className="mb-3 font-semibold">Get Evolve</h2>
-        <div className="flex flex-col gap-2">
-          <a className="btn btn-ghost w-full justify-between" href={SITE_URL} target="_blank" rel="noreferrer">
-            <span className="flex items-center gap-2"><Icon name="external" /> Use in this browser</span>
-            <span className="muted text-xs">Web / PWA</span>
-          </a>
-          {(canInstall || shouldRegisterServiceWorker()) && (
-            <button className="btn btn-ghost w-full justify-between" onClick={onInstall} disabled={!canInstall}>
-              <span className="flex items-center gap-2"><Icon name="download" /> Install as app</span>
-              <span className="muted text-xs">{canInstall ? 'Ready' : 'Use browser menu'}</span>
-            </button>
-          )}
-          <a className="btn btn-ghost w-full justify-between" href={APK_URL}>
-            <span className="flex items-center gap-2"><Icon name="external" /> Download Evolve.apk</span>
-            <span className="muted text-xs">Android</span>
-          </a>
-        </div>
-        <p className="muted mt-3 text-xs leading-relaxed">
-          The Android app loads the latest version of Evolve from the web on each launch, so updates
-          appear without reinstalling. It needs an internet connection. Browser and app data are
-          separate — use Export/Import to copy habits between them.
-        </p>
-      </section>
-      )}
 
       {/* App Updates */}
       <section className="card">

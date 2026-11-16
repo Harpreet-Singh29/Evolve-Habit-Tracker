@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Habit, Task } from './types';
 import { useStore } from './store/useStore';
 import { Layout, type Tab } from './components/Layout';
@@ -9,11 +9,6 @@ import { HabitsView } from './features/habits/HabitsView';
 import { TasksView } from './features/habits/TasksView';
 import { StatsView } from './features/stats/StatsView';
 import { SettingsView } from './features/settings/SettingsView';
-
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-};
 
 // Detect if running in Capacitor Android WebView
 const isAndroidWebView = () => {
@@ -74,8 +69,6 @@ export default function App() {
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [canInstall, setCanInstall] = useState(false);
-  const installRef = useRef<InstallPromptEvent | null>(null);
 
   const addHabit = useStore((s) => s.addHabit);
   const updateHabit = useStore((s) => s.updateHabit);
@@ -203,17 +196,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [habitFormOpen, taskFormOpen, closeHabitForm, closeTaskForm, openNewHabit, openNewTask, setTab]);
 
-  // PWA install prompt (browser only; never fires inside the WebView)
-  useEffect(() => {
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      installRef.current = e as InstallPromptEvent;
-      setCanInstall(true);
-    };
-    window.addEventListener('beforeinstallprompt', onPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
-  }, []);
-
   // Recompute "today" when the device wakes / tab regains focus (slept across midnight)
   useEffect(() => {
     const onResume = () => refreshDay();
@@ -225,15 +207,6 @@ export default function App() {
       window.removeEventListener('focus', onResume);
     };
   }, [refreshDay]);
-
-  const onInstall = () => {
-    const p = installRef.current;
-    if (!p) return;
-    void p.prompt().then(() => {
-      installRef.current = null;
-      setCanInstall(false);
-    });
-  };
 
   const saveHabit = (draft: HabitDraft) => {
     if (editingHabit) updateHabit(editingHabit.id, draft);
@@ -257,7 +230,7 @@ export default function App() {
         {tab === 'tasks' && <TasksView />}
         {tab === 'stats' && <StatsView />}
         {tab === 'settings' && (
-          <SettingsView theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} onInstall={onInstall} canInstall={canInstall} />
+          <SettingsView theme={theme} onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))} />
         )}
       </Layout>
       <HabitForm open={habitFormOpen} onClose={closeHabitForm} onSave={saveHabit} initial={editingHabit} />
