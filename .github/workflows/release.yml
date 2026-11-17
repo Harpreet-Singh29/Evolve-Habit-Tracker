@@ -33,7 +33,7 @@ jobs:
       # header comment). No vite/web build is needed — only the native libs.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install Capacitor native libraries
