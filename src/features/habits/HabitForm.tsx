@@ -184,7 +184,7 @@ export function HabitForm({
                     onClick={() => toggleDay(n)}
                     className="tap grid h-11 w-11 place-items-center text-sm font-semibold control transition"
                     style={{
-                      background: isExcess ? '#ef4444' : active ? 'var(--brand)' : undefined,
+                      background: isExcess ? 'var(--danger)' : active ? 'var(--brand)' : undefined,
                       color: active || isExcess ? 'var(--brand-text)' : undefined,
                       borderColor: active || isExcess ? 'transparent' : undefined,
                       borderRadius: 'var(--r-lg)',
@@ -215,7 +215,7 @@ export function HabitForm({
                     <span className="w-6 text-center font-semibold">{tpw.target}</span>
                   </div>
                   {hint && (
-                    <p className="mt-2 text-xs" style={{ color: '#f59e0b' }} role="status">
+                    <p className="mt-2 text-xs" style={{ color: 'var(--warning)' }} role="status">
                       {hint}
                     </p>
                   )}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { formatDate, getTodayLocal, monthLabel } from '../../lib/dates';
 import { bestStreak, completionRate, currentStreak, heatmap } from '../../lib/streaks';
+import { ensureContrast } from '../../lib/color';
 import { EmptyState, Icon } from '../../components/ui';
 
 function Heatmap({ habitId }: { habitId: string }) {
@@ -119,7 +120,7 @@ export function StatsView() {
                 <span className="text-lg">{h.icon}</span>
                 <span className="flex-1 truncate text-sm">{h.name}</span>
                 <span className="muted text-xs">best {bestStreak(h, entries)}</span>
-                <span className="flex items-center gap-1 text-sm font-semibold" style={{ color: h.color }}>
+                <span className="flex items-center gap-1 text-sm font-semibold" style={{ color: ensureContrast(h.color) }}>
                   <Icon name="flame" className="h-4 w-4" /> {currentStreak(h, entries)}
                 </span>
               </div>

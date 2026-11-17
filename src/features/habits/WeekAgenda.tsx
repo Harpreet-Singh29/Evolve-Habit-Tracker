@@ -272,7 +272,7 @@ export function WeekAgenda() {
                               </span>
                               {t.dueTime && <span className="muted text-[11px]">{t.dueTime}</span>}
                               {overdue && (
-                                <span className="ml-2 text-[11px] font-medium" style={{ color: '#ef4444' }}>
+                                <span className="ml-2 text-[11px] font-medium" style={{ color: 'var(--danger)' }}>
                                   Overdue
                                 </span>
                               )}
@@ -288,7 +288,7 @@ export function WeekAgenda() {
                               aria-label={confirmId === t.id ? `Confirm delete "${t.title}"` : `Delete "${t.title}"`}
                             >
                               {confirmId === t.id ? (
-                                <span className="font-medium" style={{ color: '#ef4444' }}>Del?</span>
+                                <span className="font-medium" style={{ color: 'var(--danger)' }}>Del?</span>
                               ) : (
                                 <Icon name="trash" className="h-3.5 w-3.5" />
                               )}

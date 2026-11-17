@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Habit } from '../../types';
 import { useStore } from '../../store/useStore';
 import { currentStreak } from '../../lib/streaks';
+import { ensureContrast } from '../../lib/color';
 import { EmptyState, Icon } from '../../components/ui';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -54,7 +55,7 @@ export function HabitsView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (h: H
                   <div className="muted text-xs">{scheduleLabel(h)}</div>
                 </div>
                 {streak > 0 && (
-                  <div className="flex shrink-0 items-center gap-1 px-2 py-1 text-xs font-semibold" style={{ background: 'var(--surface-2)', color: h.color, borderRadius: 'var(--r-md)' }}>
+                  <div className="flex shrink-0 items-center gap-1 px-2 py-1 text-xs font-semibold" style={{ background: 'var(--surface-2)', color: ensureContrast(h.color), borderRadius: 'var(--r-md)' }}>
                     <Icon name="flame" className="h-4 w-4" /> {streak}
                   </div>
                 )}

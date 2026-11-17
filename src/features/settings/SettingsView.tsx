@@ -165,7 +165,7 @@ export function SettingsView({
       </div>
 
       {msg && (
-        <div className="card animate-fade text-sm" style={{ borderColor: msg.ok ? 'var(--brand)' : '#ef4444' }}>
+        <div className="card animate-fade text-sm" style={{ borderColor: msg.ok ? 'var(--brand)' : 'var(--danger)' }}>
           {msg.text}
         </div>
       )}
@@ -226,7 +226,7 @@ export function SettingsView({
         </div>
 
         {updateInfo && !updateInfo.checking && (
-          <div className="mt-3 p-3 rounded bg-muted/50">
+          <div className="mt-3 p-3 rounded" style={{ background: 'var(--control)' }}>
             <p className="text-sm">
               <strong>Current:</strong> v{updateInfo.currentVersion}
               {updateInfo.latestVersion && (
@@ -237,7 +237,7 @@ export function SettingsView({
               )}
             </p>
             {updateInfo.error && updateInfo.error !== 'already_latest' && (
-              <p className="text-sm text-red-500 mt-1">Error: {updateInfo.error}</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--danger)' }}>Error: {updateInfo.error}</p>
             )}
             {updateInfo.available && updateInfo.downloadUrl && (
               <>
@@ -252,10 +252,10 @@ export function SettingsView({
               </>
             )}
             {!updateInfo.available && !updateInfo.error && (
-              <p className="text-sm text-green-500 mt-1">✓ You're on the latest version!</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--success)' }}>✓ You're on the latest version!</p>
             )}
             {updateInfo.error === 'already_latest' && (
-              <p className="text-sm text-green-500 mt-1">✓ You're on the latest version (v{updateInfo.latestVersion})</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--success)' }}>✓ You're on the latest version (v{updateInfo.latestVersion})</p>
             )}
           </div>
         )}
@@ -274,12 +274,12 @@ export function SettingsView({
       </section>
 
       {/* Danger zone */}
-      <section className="card" style={{ borderColor: confirmClear ? '#ef4444' : undefined }}>
+      <section className="card" style={{ borderColor: confirmClear ? 'var(--danger)' : undefined }}>
         <h2 className="mb-2 font-semibold">Clear all data</h2>
         <p className="muted mb-3 text-sm">Permanently removes every habit and check-in on this device. Export a backup first.</p>
         <button
           className="btn btn-ghost w-full"
-          style={{ color: '#ef4444' }}
+          style={{ color: 'var(--danger)' }}
           onClick={() => {
             if (confirmClear) { clearAll(); setConfirmClear(false); flash('All data cleared.'); }
             else setConfirmClear(true);

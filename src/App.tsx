@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import type { Habit, Task } from './types';
 import { useStore } from './store/useStore';
 import { Layout, type Tab } from './components/Layout';
@@ -151,12 +151,17 @@ export default function App() {
   }, [computeAndUpdateIcon]);
 
   // Theme
+  // lib/color.ts computes some text colors at render time from the <html>
+  // class, which this effect sets after render. Refresh once more now that
+  // the class matches the theme so those colors are never one render behind.
+  const [, refreshComputedColors] = useReducer((n: number) => n + 1, 0);
   useEffect(() => {
     document.documentElement.classList.toggle('light', theme === 'light');
     window.localStorage.setItem('evolve-theme', theme);
     if (isAndroidWebView() && window.Android?.setAppTheme) {
       window.Android.setAppTheme(theme);
     }
+    refreshComputedColors();
   }, [theme]);
 
   // Expose modal state to the native back-button handler (lib/backButton.ts).

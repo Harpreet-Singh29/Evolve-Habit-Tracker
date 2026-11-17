@@ -191,8 +191,8 @@ export function TasksView() {
             onClick={() => setFilter(f.id)}
             role="tab"
             aria-selected={filter === f.id}
-            className={`btn flex-shrink-0 !px-3 text-sm ${filter === f.id ? 'text-white' : 'muted'}`}
-            style={filter === f.id ? { background: 'var(--brand)' } : undefined}
+            className={`btn flex-shrink-0 !px-3 text-sm ${filter === f.id ? '' : 'muted'}`}
+            style={filter === f.id ? { background: 'var(--brand)', color: 'var(--brand-text)' } : undefined}
           >
             {f.label}
           </button>
@@ -219,7 +219,7 @@ export function TasksView() {
                   className="tap grid h-12 w-12 shrink-0 place-items-center rounded-full"
                   style={{
                     background: t.done ? 'var(--brand)' : overdue ? '#ef4444' : dueToday ? 'var(--brand)' : 'var(--surface-2)',
-                    color: t.done ? '#fff' : overdue ? '#fff' : dueToday ? 'var(--brand-text)' : 'var(--muted)',
+                    color: t.done ? 'var(--brand-text)' : overdue ? '#fff' : dueToday ? 'var(--brand-text)' : 'var(--muted)',
                     border: t.done ? 'none' : '2px solid var(--border)',
                   }}
                   onClick={() => toggleTask(t.id)}
@@ -240,7 +240,7 @@ export function TasksView() {
                         {t.dueTime}
                       </span>
                     )}
-                    {overdue && !t.done && <span className="text-xs font-medium" style={{ color: '#ef4444' }}>Overdue</span>}
+                    {overdue && !t.done && <span className="text-xs font-medium" style={{ color: 'var(--danger)' }}>Overdue</span>}
                     {dueToday && !t.done && !overdue && <span className="text-xs font-medium" style={{ color: 'var(--brand)' }}>Due today</span>}
                   </div>
                 </div>

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import { formatDate, getTodayLocal } from '../../lib/dates';
 import { isScheduledOn, weeklyProgress, weeklyTarget } from '../../lib/streaks';
+import { readableTextColor } from '../../lib/color';
 import { EmptyState, Icon } from '../../components/ui';
 
 export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: () => void }) {
@@ -90,7 +91,7 @@ export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: 
                       className="tap grid h-10 w-10 shrink-0 place-items-center rounded-full"
                       style={{
                         background: done ? h.color : 'var(--surface-2)',
-                        color: done ? '#fff' : 'var(--muted)',
+                        color: done ? readableTextColor(h.color) : 'var(--muted)',
                         border: done ? 'none' : '2px solid var(--border)',
                       }}
                     >

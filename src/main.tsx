@@ -72,6 +72,14 @@ declare global {
   }
 }
 
+// Apply the persisted theme BEFORE the first render: CSS variables and any
+// render-time contrast colors (src/lib/color.ts) then see the right theme
+// from the very first paint. App.tsx keeps the class in sync afterwards.
+document.documentElement.classList.toggle(
+  'light',
+  (window.localStorage.getItem('evolve-theme') ?? 'light') === 'light',
+);
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
