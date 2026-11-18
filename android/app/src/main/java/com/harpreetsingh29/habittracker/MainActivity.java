@@ -373,6 +373,16 @@ public class MainActivity extends BridgeActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             getWindow().setNavigationBarContrastEnforced(false);
         }
+
+        // The WebView does not paint beneath the transparent bars on every
+        // device, so the strip above the app shows the WINDOW background. With
+        // a Light app theme that is AppCompat's #FAFAFA, which left a light
+        // strip above a dark app. Drive it from the app's own theme instead.
+        int appBackground = isLightTheme ? 0xFFEEF0F3 : 0xFF18181B; // --bg light / dark
+        getWindow().getDecorView().setBackgroundColor(appBackground);
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().setBackgroundColor(appBackground);
+        }
     }
 
     private static final String PACKAGE_NAME = "com.harpreetsingh29.habittracker";
