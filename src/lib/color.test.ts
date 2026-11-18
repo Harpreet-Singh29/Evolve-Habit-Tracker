@@ -41,9 +41,16 @@ describe('ensureContrast', () => {
   });
 
   it('brings every habit color to 4.5:1 on both themes', () => {
+    // Light reference is the darkest light surface (--surface-2/--control).
+    for (const c of PALETTE) {
+      expect(contrastRatio(ensureContrast(c, 4.5, true), '#e8ebef')).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(ensureContrast(c, 4.5, false), '#27272a')).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('never lands under 4.5:1 on the lightest light surface either', () => {
     for (const c of PALETTE) {
       expect(contrastRatio(ensureContrast(c, 4.5, true), '#ffffff')).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(ensureContrast(c, 4.5, false), '#27272a')).toBeGreaterThanOrEqual(4.5);
     }
   });
 

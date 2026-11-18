@@ -58,7 +58,11 @@
   --control-hover: #323237;
   --text: #fafafa;           /* near-white text */
   --muted: #a1a1aa;          /* neutral muted */
-  --border: #3f3f46;         /* neutral border */
+  --border: #3f3f46;         /* neutral border (decorative edges, dividers) */
+  /* Interactive edges only: 3.3:1 against the card and 3.3:1 against
+     --control, so inputs / unchecked circles meet WCAG 1.4.11 without a
+     second stroke or a heavier border width. */
+  --border-strong: #6b7280;
   --brand: #ffffff;          /* primary accent (dark mode = white) */
   --brand-strong: #e2e2e2;   /* pressed state */
   --brand-text: #18181b;     /* text on brand buttons (dark) */
@@ -66,6 +70,7 @@
 
   /* Semantic status colors (dark) — AA (4.5:1) as text on dark surfaces */
   --danger: #f87171;         /* red-400 */
+  --danger-on: #1a1d21;      /* ink on a --danger fill: 6.1:1 */
   --success: #4ade80;        /* green-400 */
   --warning: #f59e0b;        /* amber-500 */
 
@@ -98,6 +103,7 @@ html.light {
   --text: #1a1d21;
   --muted: #4b5563;          /* gray-600: >=6.3:1 on every light surface */
   --border: #d1d5db;
+  --border-strong: #7d848f;  /* interactive edges: 3.0:1 vs card and --control */
   --brand: #1a1d21;          /* primary accent (light mode = near-black) */
   --brand-strong: #374151;   /* pressed state */
   --brand-text: #ffffff;     /* text on brand buttons (light) */
@@ -105,6 +111,7 @@ html.light {
 
   /* Semantic status colors (light) — AA (4.5:1) as text on light surfaces */
   --danger: #b91c1c;         /* red-700 */
+  --danger-on: #ffffff;      /* ink on a --danger fill: 6.5:1 */
   --success: #166534;        /* green-800 */
   --warning: #92400e;        /* amber-800 */
 
@@ -154,7 +161,7 @@ body {
   }
   .control {
     background: var(--control);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
     box-shadow: var(--shadow-inset);
   }
   .control-pressed {
@@ -167,11 +174,13 @@ body {
   .btn,
   .btn-primary,
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 font-medium transition active:scale-[0.98] disabled:opacity-50;
+    /* 70%, not 50%: at half opacity the light-theme primary label fell to
+       3.28:1. 70% keeps disabled text above AA while still reading disabled. */
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 font-medium transition active:scale-[0.98] disabled:opacity-70;
     border-radius: var(--r-lg);
     min-height: 44px;
     background: var(--control);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
     box-shadow: var(--shadow-inset);
   }
   .btn:active:not(:disabled),
@@ -199,7 +208,7 @@ body {
   .input {
     @apply w-full px-3 py-2.5 outline-none;
     background: var(--control);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
     border-radius: var(--r-lg);
     min-height: 44px;
     box-shadow: var(--shadow-inset);
@@ -229,7 +238,7 @@ body {
 
 /* Thin scrollbars on desktop */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
 
 @keyframes spin {
   from { transform: rotate(0deg); }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Habit, Schedule } from '../../types';
 import { Modal } from '../../components/ui';
+import { habitFill } from '../../lib/color';
 
 const ICONS = ['✅', '🏃', '📚', '💧', '🧘', '💪', '🌱', '🎨', '🎵', '😴', '🥗', '✍️', '🚭', '🧹', '☀️', '🦷'];
 const COLORS = ['#1a1d21', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#14b8a6'];
@@ -147,7 +148,7 @@ export function HabitForm({
                 key={c}
                 onClick={() => set('color', c)}
                 className="tap h-9 w-9 rounded-full"
-                style={{ background: c, outline: draft.color === c ? '3px solid var(--text)' : 'none', outlineOffset: 2 }}
+                style={{ background: habitFill(c), outline: draft.color === c ? '3px solid var(--text)' : 'none', outlineOffset: 2 }}
                 aria-label={`Color ${c}`}
               />
             ))}

@@ -11,8 +11,15 @@
 const INK_DARK = '#1a1d21'; // light-theme --text
 const INK_LIGHT = '#fafafa'; // dark-theme --text
 
-const SURFACE_LIGHT = '#ffffff'; // light --surface-3 (lightest light surface)
+/* Light theme: contrast is worst against the DARKEST light surface, so a pass
+   here guarantees a pass on every light surface. #e8ebef is --surface-2 /
+   --control; #ffffff (--surface-3) is lighter and therefore easier. */
+const SURFACE_LIGHT = '#e8ebef';
 const SURFACE_DARK = '#27272a'; // dark --surface-2/--control (lightest dark surface)
+
+/* Card surfaces, used for solid habit-coloured fills (see habitFill). */
+const CARD_LIGHT = '#ffffff'; // light --surface-3
+const CARD_DARK = '#1f1f23'; // dark --surface-3
 
 /** True when the light theme class is present on <html>. Defaults to dark. */
 export function isLightTheme(): boolean {
@@ -103,18 +110,14 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
 
 /**
  * Nudge a color's lightness (hue-preserving) until it reaches `min` contrast
- * against the current theme's worst-case surface. Returns the input unchanged
- * when it already passes; falls back to the closest attempt if the exact ratio
- * is unreachable. `light` overrides theme detection (for tests).
+ * against `ref`. Returns the input unchanged when it already passes; falls back
+ * to the closest attempt if the exact ratio is unreachable.
  */
-export function ensureContrast(hex: string, min = 4.5, light?: boolean): string {
-  const isLight = light ?? isLightTheme();
-  const ref = isLight ? SURFACE_LIGHT : SURFACE_DARK;
+function nudgeToContrast(hex: string, ref: string, min: number, dir: 1 | -1): string {
   if (contrastRatio(hex, ref) >= min) return hex;
   const rgb = parseHex(hex);
   if (!rgb) return hex;
   const [h, s, l] = rgbToHsl(rgb[0], rgb[1], rgb[2]);
-  const dir = isLight ? -1 : 1; // darken on the light theme, lighten on the dark theme
   let best = hex;
   let bestRatio = contrastRatio(hex, ref);
   for (let i = 1; i <= 50; i++) {
@@ -130,4 +133,32 @@ export function ensureContrast(hex: string, min = 4.5, light?: boolean): string 
     if (li === 0 || li === 1) break;
   }
   return best;
+}
+
+/**
+ * Nudge a color's lightness (hue-preserving) until it reaches `min` contrast
+ * against the current theme's worst-case surface. Returns the input unchanged
+ * when it already passes. `light` overrides theme detection (for tests).
+ */
+export function ensureContrast(hex: string, min = 4.5, light?: boolean): string {
+  const isLight = light ?? isLightTheme();
+  const ref = isLight ? SURFACE_LIGHT : SURFACE_DARK;
+  return nudgeToContrast(hex, ref, min, isLight ? -1 : 1);
+}
+
+/**
+ * Theme-aware version of a habit colour for use as a SOLID FILL — the done
+ * circle, heatmap cells, progress-bar fills, swatches, and their alpha tints
+ * (`${habitFill(c)}22`).
+ *
+ * The palette deliberately includes #1a1d21, which is the light theme's ink
+ * and reads at 1.03:1 against the dark card — the circle, heatmap and progress
+ * bar simply vanished in dark mode. Fills must clear the 3:1 non-text minimum
+ * against the card surface of whichever theme is active. Colours that already
+ * pass are returned untouched, so the palette is unchanged and light mode keeps
+ * its true black. `light` overrides theme detection (for tests).
+ */
+export function habitFill(hex: string, min = 3, light?: boolean): string {
+  const isLight = light ?? isLightTheme();
+  return nudgeToContrast(hex, isLight ? CARD_LIGHT : CARD_DARK, min, isLight ? -1 : 1);
 }

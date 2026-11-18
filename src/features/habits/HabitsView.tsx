@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Habit } from '../../types';
 import { useStore } from '../../store/useStore';
 import { currentStreak } from '../../lib/streaks';
-import { ensureContrast } from '../../lib/color';
+import { ensureContrast, habitFill } from '../../lib/color';
 import { EmptyState, Icon } from '../../components/ui';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -47,7 +47,7 @@ export function HabitsView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (h: H
             const streak = currentStreak(h, entries);
             return (
               <div key={h.id} className="card flex items-center gap-3 animate-fade">
-                <div className="grid h-11 w-11 shrink-0 place-items-center text-xl" style={{ background: `${h.color}22`, borderRadius: 'var(--r-lg)' }}>
+                <div className="grid h-11 w-11 shrink-0 place-items-center text-xl" style={{ background: `${habitFill(h.color)}22`, borderRadius: 'var(--r-lg)' }}>
                   {h.icon}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -76,7 +76,7 @@ export function HabitsView({ onAdd, onEdit }: { onAdd: () => void; onEdit: (h: H
           <summary className="cursor-pointer py-2">Archived ({archived.length})</summary>
           <div className="mt-2 flex flex-col gap-2">
             {archived.map((h) => (
-              <div key={h.id} className="card flex items-center gap-3 opacity-70">
+              <div key={h.id} className="card flex items-center gap-3 opacity-90">
                 <span className="text-lg">{h.icon}</span>
                 <span className="flex-1 truncate">{h.name}</span>
                 <button

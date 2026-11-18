@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { formatDate, getTodayLocal, monthLabel } from '../../lib/dates';
 import { bestStreak, completionRate, currentStreak, heatmap } from '../../lib/streaks';
-import { ensureContrast } from '../../lib/color';
+import { ensureContrast, habitFill } from '../../lib/color';
 import { EmptyState, Icon } from '../../components/ui';
 
 function Heatmap({ habitId }: { habitId: string }) {
@@ -13,6 +13,8 @@ function Heatmap({ habitId }: { habitId: string }) {
 
   if (!h) return null;
 
+  const fill = habitFill(h.color);
+
   return (
     <div className="overflow-x-auto">
       <div className="grid grid-flow-col grid-rows-7 gap-1" style={{ width: 'max-content' }}>
@@ -22,7 +24,7 @@ function Heatmap({ habitId }: { habitId: string }) {
             title={`${c.date}${c.done ? ' · done' : c.scheduled ? ' · not done' : ''}`}
             className="h-4 w-4"
             style={{
-              background: c.done ? h.color : c.scheduled ? 'var(--surface-2)' : 'transparent',
+              background: c.done ? fill : c.scheduled ? 'var(--border)' : 'transparent',
               borderRadius: 'var(--r-sm)',
               outline: c.date === getTodayLocal() ? '2px solid var(--text)' : 'none',
               outlineOffset: 1,
@@ -32,9 +34,9 @@ function Heatmap({ habitId }: { habitId: string }) {
       </div>
       <div className="muted mt-2 flex items-center gap-2 text-xs">
         <span>Less</span>
-        <span className="h-3 w-3" style={{ background: 'var(--surface-2)', borderRadius: 'var(--r-xs)' }} />
-        <span className="h-3 w-3" style={{ background: h.color, opacity: 0.5, borderRadius: 'var(--r-xs)' }} />
-        <span className="h-3 w-3" style={{ background: h.color, borderRadius: 'var(--r-xs)' }} />
+        <span className="h-3 w-3" style={{ background: 'var(--border)', borderRadius: 'var(--r-xs)' }} />
+        <span className="h-3 w-3" style={{ background: fill, opacity: 0.5, borderRadius: 'var(--r-xs)' }} />
+        <span className="h-3 w-3" style={{ background: fill, borderRadius: 'var(--r-xs)' }} />
         <span>More</span>
         <span className="ml-auto">Last 16 weeks</span>
       </div>
@@ -89,8 +91,8 @@ export function StatsView() {
                   <span className="flex-1 truncate">{h.name}</span>
                   <span className="muted">{rate}%</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
-                  <div className="h-full rounded-full" style={{ width: `${rate}%`, background: h.color }} />
+                <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--border)' }}>
+                  <div className="h-full rounded-full" style={{ width: `${rate}%`, background: habitFill(h.color) }} />
                 </div>
               </button>
             );

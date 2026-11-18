@@ -112,7 +112,7 @@ export function TasksView() {
       className="flex gap-1 p-1"
       role="tablist"
       aria-label="Tasks view"
-      style={{ background: 'var(--control)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)' }}
+      style={{ background: 'var(--control)', border: '1px solid var(--border-strong)', borderRadius: 'var(--r-lg)' }}
     >
       {(['list', 'week'] as const).map((v) => (
         <button
@@ -214,13 +214,13 @@ export function TasksView() {
             const overdue = isOverdue(t, today);
             const dueToday = isDueToday(t, today);
             return (
-              <div key={t.id} className="card flex items-center gap-3 animate-fade" style={{ opacity: t.done ? 0.6 : 1 }}>
+              <div key={t.id} className="card flex items-center gap-3 animate-fade" style={{ opacity: t.done ? 0.9 : 1 }}>
                 <button
                   className="tap grid h-12 w-12 shrink-0 place-items-center rounded-full"
                   style={{
-                    background: t.done ? 'var(--brand)' : overdue ? '#ef4444' : dueToday ? 'var(--brand)' : 'var(--surface-2)',
-                    color: t.done ? 'var(--brand-text)' : overdue ? '#fff' : dueToday ? 'var(--brand-text)' : 'var(--muted)',
-                    border: t.done ? 'none' : '2px solid var(--border)',
+                    background: t.done ? 'var(--brand)' : overdue ? 'var(--danger)' : dueToday ? 'var(--brand)' : 'var(--surface-2)',
+                    color: t.done ? 'var(--brand-text)' : overdue ? 'var(--danger-on)' : dueToday ? 'var(--brand-text)' : 'var(--muted)',
+                    border: t.done || overdue || dueToday ? 'none' : '2px solid var(--border-strong)',
                   }}
                   onClick={() => toggleTask(t.id)}
                   aria-label={t.done ? 'Mark incomplete' : 'Mark complete'}

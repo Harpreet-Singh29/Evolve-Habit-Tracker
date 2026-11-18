@@ -224,7 +224,7 @@ export function WeekAgenda() {
                     background: isToday ? 'var(--brand)' : 'var(--control)',
                     color: isToday ? 'var(--brand-text)' : isPast ? 'var(--muted)' : 'var(--text)',
                     borderRadius: 'var(--r-lg)',
-                    border: isToday ? '1px solid transparent' : '1px solid var(--border)',
+                    border: isToday ? '1px solid transparent' : '1px solid var(--border-strong)',
                   }}
                 >
                   <span className="text-[10px] font-semibold tracking-wider">{dow}</span>
@@ -239,7 +239,7 @@ export function WeekAgenda() {
                     </span>
                   </div>
                   {items.length === 0 ? (
-                    <p className="muted mt-1 text-xs opacity-70">No items</p>
+                    <p className="muted mt-1 text-xs opacity-85">No items</p>
                   ) : (
                     <ul className="mt-1 flex flex-col gap-1.5">
                       {items.map((t) => {
@@ -248,14 +248,14 @@ export function WeekAgenda() {
                           <li
                             key={t.id}
                             className="flex items-center gap-2 rounded-lg px-2 py-1.5"
-                            style={{ background: 'var(--control)', opacity: t.done ? 0.6 : 1 }}
+                            style={{ background: 'var(--control)', opacity: t.done ? 0.9 : 1 }}
                           >
                             <button
                               className="grid h-6 w-6 shrink-0 place-items-center rounded-full"
                               style={{
                                 background: t.done ? 'var(--brand)' : 'transparent',
                                 color: t.done ? 'var(--brand-text)' : 'var(--muted)',
-                                border: t.done ? 'none' : '2px solid var(--border)',
+                                border: t.done ? 'none' : '2px solid var(--border-strong)',
                               }}
                               onClick={() => toggleTask(t.id)}
                               aria-label={t.done ? `Mark "${t.title}" incomplete` : `Mark "${t.title}" complete`}

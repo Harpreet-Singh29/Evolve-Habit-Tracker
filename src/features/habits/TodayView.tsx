@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import { formatDate, getTodayLocal } from '../../lib/dates';
 import { isScheduledOn, weeklyProgress, weeklyTarget } from '../../lib/streaks';
-import { readableTextColor } from '../../lib/color';
+import { habitFill, readableTextColor } from '../../lib/color';
 import { EmptyState, Icon } from '../../components/ui';
 
 export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: () => void }) {
@@ -50,7 +50,7 @@ export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: 
             <span className="font-medium">Daily progress</span>
             <span className="muted">{doneCount} / {scheduled.length} · {pct}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+          <div className="h-2 overflow-hidden rounded-full" style={{ background: 'var(--border)' }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: 'var(--brand)' }} />
           </div>
         </div>
@@ -68,6 +68,8 @@ export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: 
               </div>
               {scheduled.map((h) => {
                 const done = entries.some((e) => e.habitId === h.id && e.date === today && e.done);
+                // Solid fill: must stay visible on this theme's card surface.
+                const fill = habitFill(h.color);
                 const weekly = h.schedule.type === 'timesPerWeek'
                   ? `${weeklyProgress(h, entries, today)} / ${weeklyTarget(h)} this week`
                   : null;
@@ -76,9 +78,9 @@ export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: 
                     key={h.id}
                     onClick={() => toggleEntry(h.id, today)}
                     className="card flex w-full items-center gap-4 text-left transition active:scale-[0.99] animate-fade control-pressed"
-                    style={done ? { borderColor: h.color, boxShadow: '0 0 0 2px ' + h.color + '40' } : undefined}
+                    style={done ? { borderColor: fill, boxShadow: '0 0 0 2px ' + fill + '40' } : undefined}
                   >
-                    <div className="grid h-12 w-12 shrink-0 place-items-center text-2xl" style={{ background: `${h.color}22`, borderRadius: 'var(--r-lg)' }}>
+                    <div className="grid h-12 w-12 shrink-0 place-items-center text-2xl" style={{ background: `${fill}22`, borderRadius: 'var(--r-lg)' }}>
                       {h.icon}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -90,9 +92,9 @@ export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: 
                     <div
                       className="tap grid h-10 w-10 shrink-0 place-items-center rounded-full"
                       style={{
-                        background: done ? h.color : 'var(--surface-2)',
-                        color: done ? readableTextColor(h.color) : 'var(--muted)',
-                        border: done ? 'none' : '2px solid var(--border)',
+                        background: done ? fill : 'var(--surface-2)',
+                        color: done ? readableTextColor(fill) : 'var(--muted)',
+                        border: done ? 'none' : '2px solid var(--border-strong)',
                       }}
                     >
                       {done && <Icon name="check" className="h-6 w-6 animate-pop" />}
@@ -128,7 +130,7 @@ export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: 
                     style={{
                       background: 'var(--surface-2)',
                       color: 'var(--muted)',
-                      border: '2px solid var(--border)',
+                      border: '2px solid var(--border-strong)',
                     }}
                   />
                 </button>
@@ -137,7 +139,7 @@ export function TodayView({ onAdd, onAddTask }: { onAdd: () => void; onAddTask: 
                 <button
                   key={t.id}
                   onClick={() => toggleTask(t.id)}
-                  className="card flex w-full items-center gap-4 text-left transition active:scale-[0.99] animate-fade control-pressed opacity-60"
+                  className="card flex w-full items-center gap-4 text-left transition active:scale-[0.99] animate-fade control-pressed opacity-90"
                 >
                   <div className="grid h-12 w-12 shrink-0 place-items-center text-2xl" style={{ background: 'var(--brand)', borderRadius: 'var(--r-lg)' }}>
                     <div style={{ color: 'var(--brand-text)' }}><Icon name="tasks" className="h-6 w-6" /></div>
