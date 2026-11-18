@@ -100,12 +100,12 @@ export function WeekAgenda() {
   const goWeek = useCallback((delta: number) => {
     setWeekStart((w) => addDays(w, delta * 7));
     setConfirmId(null);
-  }, []);
+  }, [setWeekStart, setConfirmId]);
 
   const goToday = useCallback(() => {
     setWeekStart(startOfWeek(getTodayLocal()));
     setConfirmId(null);
-  }, []);
+  }, [setWeekStart, setConfirmId]);
 
   const openAdd = (date: string) => {
     setEditing(null);

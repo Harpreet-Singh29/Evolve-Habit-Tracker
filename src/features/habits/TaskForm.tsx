@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Task } from '../../types';
 import { Modal } from '../../components/ui';
 import { getTodayLocal } from '../../lib/dates';
@@ -30,19 +30,23 @@ export function TaskForm({
   initialDate?: string | null;
 }) {
   const [draft, setDraft] = useState<TaskDraft>(emptyDraft);
-
-  useEffect(() => {
-    if (!open) return;
-    setDraft(
-      initial
-        ? {
-            title: initial.title,
-            dueDate: initial.dueDate,
-            dueTime: initial.dueTime ?? '',
-          }
-        : { ...emptyDraft(), dueDate: initialDate || getTodayLocal() },
-    );
-  }, [open, initial, initialDate]);
+  // Reset the draft whenever the dialog opens (React's sanctioned
+  // "adjust state during render" pattern - see HabitForm).
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setDraft(
+        initial
+          ? {
+              title: initial.title,
+              dueDate: initial.dueDate,
+              dueTime: initial.dueTime ?? '',
+            }
+          : { ...emptyDraft(), dueDate: initialDate || getTodayLocal() },
+      );
+    }
+  }
 
   const set = <K extends keyof TaskDraft>(k: K, v: TaskDraft[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));

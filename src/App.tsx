@@ -104,11 +104,6 @@ export default function App() {
     if (isAndroidWebView() && window.Android) {
       window.Android.updateIconState(state);
     }
-    
-    // Also expose for native-to-web calls
-    window.EvolveNative = {
-      requestIconUpdate: () => computeAndUpdateIcon(),
-    };
   }, []);
 
   // Initialize native bridge and update icon on store changes
@@ -117,6 +112,12 @@ export default function App() {
     
     // Initial computation
     computeAndUpdateIcon();
+    
+    // Expose for native-to-web calls. Points at the stable callback (its
+    // identity never changes), so a single assignment here is enough.
+    window.EvolveNative = {
+      requestIconUpdate: () => computeAndUpdateIcon(),
+    };
     
     // Subscribe to store changes
     const unsubscribe = useStore.subscribe((state) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Habit, Schedule } from '../../types';
 import { Modal } from '../../components/ui';
 
@@ -36,21 +36,26 @@ export function HabitForm({
   initial?: Habit | null;
 }) {
   const [draft, setDraft] = useState<HabitDraft>(emptyDraft);
-
-  useEffect(() => {
-    if (!open) return;
-    setDraft(
-      initial
-        ? {
-            name: initial.name,
-            icon: initial.icon,
-            color: initial.color,
-            schedule: initial.schedule,
-            reminder: initial.reminder,
-          }
-        : emptyDraft(),
-    );
-  }, [open, initial]);
+  // Reset the draft whenever the dialog opens. This is React's sanctioned
+  // "adjust state during render" pattern - the previous setState-in-effect
+  // version trips react-hooks/set-state-in-effect.
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setDraft(
+        initial
+          ? {
+              name: initial.name,
+              icon: initial.icon,
+              color: initial.color,
+              schedule: initial.schedule,
+              reminder: initial.reminder,
+            }
+          : emptyDraft(),
+      );
+    }
+  }
 
   const set = <K extends keyof HabitDraft>(k: K, v: HabitDraft[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));
