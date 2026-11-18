@@ -1,7 +1,7 @@
 {
   "name": "evolve-habit-tracker",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.9",
   "type": "module",
   "description": "Evolve — a local-first habit tracker for the browser and Android",
   "scripts": {
@@ -46,7 +46,7 @@
     "vitest": "5.1.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "allowScripts": {
     "esbuild@0.21.5": true,

@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { useStore } from '../../store/useStore';
 import { downloadBackup, parseBackup } from '../../lib/backup';
 import { isNative } from '../../lib/platform';
+import { APP_VERSION } from '../../lib/version';
 import { Icon } from '../../components/ui';
 
 interface UpdateCheckResult {
@@ -77,7 +78,7 @@ export function SettingsView({
       setUpdateInfo({
         checking: false,
         available: false,
-        currentVersion: '0.2.8',
+        currentVersion: APP_VERSION,
         latestVersion: '',
         error: 'Native update check not available (running in browser?)'
       });
@@ -95,15 +96,15 @@ export function SettingsView({
         setUpdateInfo({
           checking: false,
           available: false,
-          currentVersion: result.currentVersion || '0.2.8',
-          latestVersion: result.latestVersion || '0.2.8',
+          currentVersion: result.currentVersion || APP_VERSION,
+          latestVersion: result.latestVersion || APP_VERSION,
           error: undefined
         });
       } else if (result.error) {
         setUpdateInfo({
           checking: false,
           available: false,
-          currentVersion: result.currentVersion || '0.2.8',
+          currentVersion: result.currentVersion || APP_VERSION,
           latestVersion: '',
           error: result.error
         });
@@ -111,7 +112,7 @@ export function SettingsView({
         setUpdateInfo({
           checking: false,
           available: result.hasUpdate === true,
-          currentVersion: result.currentVersion || '0.2.8',
+          currentVersion: result.currentVersion || APP_VERSION,
           latestVersion: result.latestVersion || '',
           downloadUrl: result.downloadUrl,
           error: undefined
@@ -127,7 +128,7 @@ export function SettingsView({
     });
 
     // Get current version from native
-    const currentVersion = window.Android.getCurrentVersion?.() || '0.2.8';
+    const currentVersion = window.Android.getCurrentVersion?.() || APP_VERSION;
     
     setUpdateInfo(prev => prev ? { ...prev, currentVersion, checking: true } : {
       checking: true,
@@ -290,7 +291,7 @@ export function SettingsView({
         </button>
       </section>
 
-      <p className="muted text-center text-xs">Evolve v0.2.8 · {habits.length} habits · {entries.length} check-ins</p>
+      <p className="muted text-center text-xs">Evolve v{APP_VERSION} · {habits.length} habits · {entries.length} check-ins</p>
     </div>
   );
 }

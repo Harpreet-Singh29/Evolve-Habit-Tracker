@@ -73,8 +73,8 @@ to keep it.
 
 ## Local development
 
-Requirements: **Node ≥ 20**, npm, Git. (JDK 17 / Android SDK are only needed to
-build the APK — see below.)
+Requirements: **Node ≥ 22** (Capacitor 8 minimum), npm, Git. (JDK 21 / Android
+SDK are only needed to build the APK — see below.)
 
 ```bash
 npm install
@@ -161,7 +161,7 @@ git tag v0.1.0
 git push origin main --tags
 ```
 
-`.github/workflows/release.yml` then: sets up JDK 17 → decodes the keystore from
+`.github/workflows/release.yml` then: sets up JDK 21 → decodes the keystore from
 secrets → `./gradlew assembleRelease` → renames the output to the exact,
 case-sensitive **`Evolve.apk`** → publishes a GitHub Release. The stable URL
 `.../releases/latest/download/Evolve.apk` never changes because the asset
