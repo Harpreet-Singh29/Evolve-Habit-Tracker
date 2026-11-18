@@ -1,6 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Tailwind v4 theme (CSS-first; replaces the deleted tailwind.config.ts).
+   Radius utilities map onto the app's own radius scale; the font stack
+   matches the old config. No dark:/neutral-* utilities were ever used, so
+   nothing else needed porting. */
+@theme {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-2xl: var(--r-2xl);
+}
+
+@layer base {
+  /* v3 preflight parity: v4 defaults every border to currentColor, which
+     would turn divide-* rules into text-colored lines. Theme the default
+     border color instead. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+}
 
 :root {
   color-scheme: light dark;
@@ -123,7 +146,9 @@ textarea {
   .muted {
     color: var(--muted);
   }
-  .btn {
+  .btn,
+  .btn-primary,
+  .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 font-medium transition active:scale-[0.98] disabled:opacity-50;
     border-radius: var(--r-lg);
     min-height: 44px;
@@ -131,12 +156,12 @@ textarea {
     border: 1px solid var(--border);
     box-shadow: var(--shadow-inset);
   }
-  .btn:active:not(:disabled) {
+  .btn:active:not(:disabled),
+  .btn-primary:active:not(:disabled) {
     background: var(--control-hover);
     box-shadow: var(--shadow-sm);
   }
   .btn-primary {
-    @apply btn;
     background: var(--brand);
     color: var(--brand-text);
     border-color: transparent;
@@ -146,12 +171,11 @@ textarea {
     background: var(--brand-strong);
     box-shadow: var(--shadow-inset);
   }
-  .btn-ghost {
-    @apply btn;
-    background: var(--control);
-  }
   .card {
-    @apply surface-raised p-4;
+    @apply p-4;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
     border-radius: var(--r-xl);
   }
   .input {
