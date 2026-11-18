@@ -20,16 +20,16 @@
     "cap:open": "npx cap open android"
   },
   "dependencies": {
-    "@capacitor/app": "^6.0.0",
-    "@capacitor/core": "^6.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
-    "@capacitor/android": "^6.0.0",
-    "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^6.0.0",
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/assets": "4.0.0",
+    "@capacitor/cli": "8.6.2",
+    "@capacitor/core": "8.6.2",
     "@types/react": "18.3.31",
     "@types/react-dom": "18.3.7",
     "@typescript-eslint/eslint-plugin": "7.18.0",

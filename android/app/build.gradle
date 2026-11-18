@@ -18,8 +18,8 @@ def envKeyAlias = System.getenv('KEY_ALIAS') ?: 'androiddebugkey'
 def envKeyPassword = System.getenv('KEY_PASSWORD') ?: 'android'
 
 android {
-    namespace "com.harpreetsingh29.habittracker"
-    compileSdk rootProject.ext.compileSdkVersion
+    namespace = "com.harpreetsingh29.habittracker"
+    compileSdk = rootProject.ext.compileSdkVersion
 
     signingConfigs {
         release {
@@ -34,14 +34,14 @@ android {
 
     defaultConfig {
         applicationId "com.harpreetsingh29.habittracker"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10
-        versionName "0.2.8"
+        minSdk = rootProject.ext.minSdkVersion
+        targetSdk = rootProject.ext.targetSdkVersion
+        versionCode = 11
+        versionName = "0.2.9"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
     // AGP 8+ does not generate BuildConfig by default. MainActivity reads

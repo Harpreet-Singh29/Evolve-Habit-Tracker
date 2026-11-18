@@ -27,7 +27,8 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          # Capacitor 8 / AGP 8.13 require JDK 21 (upgraded from 17).
+          java-version: '21'
 
       # Gradle resolves the Capacitor libraries from node_modules (see the
       # header comment). No vite/web build is needed — only the native libs.
