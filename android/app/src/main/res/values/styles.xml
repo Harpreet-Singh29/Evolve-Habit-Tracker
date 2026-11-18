@@ -9,7 +9,12 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <!-- Evolve renders its own themes in web CSS, so the Android window theme
+         must NOT follow the system night mode. A DayNight parent made the
+         window "dark" on system-dark phones, which armed WebView
+         algorithmic darkening and inverted the app's light theme. Fixed
+         Light parent + explicit WebView opt-out in MainActivity. -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>

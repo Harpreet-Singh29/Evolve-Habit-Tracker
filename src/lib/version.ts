@@ -5,4 +5,4 @@
  * web fallbacks (the APK reads the real version from BuildConfig via the
  * native bridge; these constants only matter in the browser/PWA).
  */
-export const APP_VERSION = '0.2.9';
+export const APP_VERSION = '0.3.0';

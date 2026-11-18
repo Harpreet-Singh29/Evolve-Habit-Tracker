@@ -19,6 +19,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.webkit.WebSettingsCompat;
+import androidx.webkit.WebViewFeature;
 
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
@@ -69,6 +71,19 @@ public class MainActivity extends BridgeActivity {
             WebView webView = getBridge().getWebView();
             webView.addJavascriptInterface(this, "Android");
             Log.d(TAG, "Added JavaScript interface 'Android' for dynamic icon and updates");
+
+            // The web layer owns theming (html.light toggle + color-scheme).
+            // Android's algorithmic darkening would heuristically invert the
+            // light theme whenever the SYSTEM is dark, producing text that
+            // matches its own background. Belt and braces with the Light-only
+            // AppTheme parent and `color-scheme: only light` in the CSS.
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+                WebSettingsCompat.setAlgorithmicDarkeningAllowed(webView.getSettings(), false);
+                Log.d(TAG, "WebView algorithmic darkening disabled");
+            } else if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+                WebSettingsCompat.setForceDark(webView.getSettings(), WebSettingsCompat.FORCE_DARK_OFF);
+                Log.d(TAG, "WebView force-dark disabled");
+            }
         }
     }
     
