@@ -26,13 +26,21 @@
 }
 
 :root {
-  color-scheme: light dark;
+  /* CRITICAL: never declare `light dark` here. Android WebView's algorithmic
+     darkening (force-dark) treats a page that supports both schemes as
+     "maybe-dark" and heuristically inverts it when the SYSTEM is dark, even
+     though the app renders light. The result is blocks whose text matches
+     their own inverted background. Dark theme declares dark (nothing to
+     invert); the light theme opts out entirely with `only light`. */
+  color-scheme: dark;
   --bg: #18181b;             /* neutral near-black */
   --surface: #1f1f23;        /* neutral dark surface */
   --surface-2: #27272a;      /* neutral dark surface-2 */
   --surface-3: #1f1f23;      /* raised surface (dark) */
   --control: #27272a;        /* buttons, inputs, chips */
-  --control-hover: #3f3f46;  /* hover/active */
+  /* Pressed/hover. Must keep muted (#a1a1aa) and danger (#f87171) text above
+     4.5:1 — with #3f3f46 they fell to 4.07 / 3.78 on pressed ghost buttons. */
+  --control-hover: #323237;
   --text: #fafafa;           /* near-white text */
   --muted: #a1a1aa;          /* neutral muted */
   --border: #3f3f46;         /* neutral border */
@@ -63,6 +71,9 @@
 }
 
 html.light {
+  /* `only light` is the documented opt-out of browser/WebView auto-darkening.
+     Without it, a light page on a system-dark phone gets inverted. */
+  color-scheme: only light;
   --bg: #eef0f3;
   --surface: #f5f7fa;
   --surface-2: #e8ebef;

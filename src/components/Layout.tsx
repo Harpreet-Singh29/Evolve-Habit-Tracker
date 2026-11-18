@@ -87,7 +87,7 @@ export function Layout({
             className={`tap flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium ${tab === t.id ? '' : 'muted'}`}
             style={tab === t.id ? { color: 'var(--brand)' } : undefined}
           >
-            <Icon name={t.icon} className="h-6 w-6" />
+            <Icon name={t.icon} className="h-5 w-5" />
             <span>{t.label}</span>
           </button>
         ))}
