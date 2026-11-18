@@ -43,7 +43,6 @@ class HabitWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
-        Log.d(TAG, "onUpdate called with ${appWidgetIds.size} widget(s): ${appWidgetIds.joinToString()}")
         for (id in appWidgetIds) {
             updateWidgetInternal(context, manager, id)
         }
@@ -65,10 +64,8 @@ class HabitWidgetProvider : AppWidgetProvider() {
     }
 
     private fun updateWidgetInternal(context: Context, manager: AppWidgetManager, id: Int) {
-        Log.d(TAG, "updateWidgetInternal called for widget id=$id")
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val json = prefs.getString(KEY_TODAY_DATA, "{}") ?: "{}"
-        Log.d(TAG, "Read JSON from prefs: $json")
 
         var total = 0
         var completed = 0
@@ -81,14 +78,10 @@ class HabitWidgetProvider : AppWidgetProvider() {
             itemsJson = obj.optString("items", "[]")
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing JSON", e)
-            // Use defaults
         }
-
-        Log.d(TAG, "Parsed: total=$total, completed=$completed, itemsJson=$itemsJson")
 
         // Detect current theme (light/dark)
         val isDarkTheme = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        Log.d(TAG, "isDarkTheme=$isDarkTheme")
         
         val bgColor = if (isDarkTheme) Color.parseColor("#1A1A1A") else Color.parseColor("#F5F5F5")
         val labelColor = if (isDarkTheme) Color.WHITE else Color.BLACK
@@ -149,7 +142,6 @@ class HabitWidgetProvider : AppWidgetProvider() {
                             if (i < itemsArray.length()) {
                                 val item = itemsArray.getJSONObject(i)
                                 val itemId = item.optString("id", "")
-                                val itemDone = item.optBoolean("done", false)
                                 val date = org.json.JSONObject(json).optString("date", "")
 
                                 if (itemId.isNotEmpty()) {
@@ -187,8 +179,6 @@ class HabitWidgetProvider : AppWidgetProvider() {
         )
         views.setOnClickPendingIntent(R.id.widget_root, openPendingIntent)
 
-        Log.d(TAG, "Calling updateAppWidget for widget id=$id")
         manager.updateAppWidget(id, views)
-        Log.d(TAG, "updateAppWidget completed for widget id=$id")
     }
 }
