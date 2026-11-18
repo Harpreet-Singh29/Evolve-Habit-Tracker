@@ -23,6 +23,21 @@
   ::after {
     border-color: var(--border);
   }
+
+  /* MUST live in @layer base. Unlayered rules beat EVERY layered rule, so
+     while this sat outside the layers it silently overrode
+     `.btn-primary { color: var(--brand-text) }` (and `.muted` on buttons):
+     primary button labels inherited --text, i.e. near-black on the near-black
+     button (light theme) and near-white on white (dark theme) -> invisible.
+     That was a real Tailwind v3->v4 regression: v3's @layer was not a native
+     cascade layer, so specificity decided and the component class won. */
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
 }
 
 :root {
@@ -120,14 +135,6 @@ body {
   /* Respect Android status bar / notch */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
 }
 
 :focus-visible {
