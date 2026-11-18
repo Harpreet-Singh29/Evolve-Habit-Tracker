@@ -4,4 +4,8 @@
     <string name="title_activity_main">Evolve</string>
     <string name="package_name">com.harpreetsingh29.habittracker</string>
     <string name="custom_url_scheme">com.harpreetsingh29.habittracker</string>
+
+    <!-- Widget strings -->
+    <string name="widget_name">Evolve Habits</string>
+    <string name="widget_description">Mountain progress widget showing today\'s habit completion</string>
 </resources>

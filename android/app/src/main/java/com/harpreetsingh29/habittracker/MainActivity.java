@@ -39,6 +39,11 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.harpreetsingh29.habittracker.HabitWidgetProvider;
+
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
+
 public class MainActivity extends BridgeActivity {
     
     private static final String TAG = "EvolveMainActivity";
@@ -423,6 +428,41 @@ public class MainActivity extends BridgeActivity {
             setEnabledAlias(this, state);
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid icon state: " + stateString);
+        }
+    }
+
+    /**
+     * Update the home screen widget's cached data.
+     * Called from JavaScript when habits/tasks are toggled.
+     * @param json JSON string with today's data: {date, total, completed, items[]}
+     */
+    @JavascriptInterface
+    public void updateWidgetCache(String json) {
+        Log.d(TAG, "updateWidgetCache called from JS");
+        if (json == null || json.trim().isEmpty()) {
+            Log.w(TAG, "updateWidgetCache called with empty JSON");
+            return;
+        }
+        try {
+            // Store in SharedPreferences for the widget provider to read
+            getSharedPreferences("habit_widget_cache", MODE_PRIVATE)
+                .edit()
+                .putString("today_data", json)
+                .apply();
+            
+            // Trigger widget update
+            AppWidgetManager manager = AppWidgetManager.getInstance(this);
+            ComponentName component = new ComponentName(this, HabitWidgetProvider.class);
+            int[] ids = manager.getAppWidgetIds(component);
+            if (ids.length > 0) {
+                // Notify widgets to refresh - they'll re-read SharedPreferences
+                for (int id : ids) {
+                    HabitWidgetProvider.updateWidget(this, manager, id);
+                }
+            }
+            Log.d(TAG, "Widget cache updated, notified " + ids.length + " widget(s)");
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating widget cache", e);
         }
     }
     

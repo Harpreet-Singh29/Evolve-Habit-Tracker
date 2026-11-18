@@ -29,6 +29,8 @@ declare global {
       getCurrentVersionCode: () => number;
       checkForUpdates: (callbackId: string) => void;
       openInBrowser: (url: string) => void;
+      // Widget cache sync
+      updateWidgetCache: (json: string) => void;
     };
     EvolveNative?: {
       requestIconUpdate: () => void;

@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 // Release signing is driven entirely by environment variables supplied by
 // GitHub Actions secrets. NOTHING is committed to the repo (public repo, see

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="160dp"
+    android:viewportWidth="320"
+    android:viewportHeight="160">
+    <!-- Mountain silhouette (isosceles triangle) with tier divider lines -->
+    <!-- Background is transparent - the tier overlays provide the fill -->
+
+    <!-- Tier divider lines (4 lines at 20%, 40%, 60%, 80% height) -->
+    <!-- These are subtle guides behind the tier overlays -->
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="1"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M20,32 H300 M28,64 H292 M36,96 H284 M44,128 H276" />
+
+    <!-- Mountain outline (optional subtle border) -->
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="1"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M160,0 L310,160 H10 Z" />
+</vector>

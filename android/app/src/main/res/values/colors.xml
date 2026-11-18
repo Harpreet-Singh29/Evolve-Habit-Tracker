@@ -6,4 +6,14 @@
     <color name="colorPrimary">#6366f1</color>
     <color name="colorPrimaryDark">#3730a3</color>
     <color name="colorAccent">#818cf8</color>
+
+    <!-- Widget colors (dark mode default) -->
+    <color name="widget_bg_dark">#1A1A1A</color>
+    <color name="widget_bg_light">#F5F5F5</color>
+    <color name="widget_tier_complete">#000000</color>
+    <color name="widget_tier_incomplete">#6B6B6B</color>
+    <color name="widget_checkpoint_dark">#FFFFFF</color>
+    <color name="widget_checkpoint_light">#000000</color>
+    <color name="widget_label_dark">#FFFFFF</color>
+    <color name="widget_label_light">#000000</color>
 </resources>
