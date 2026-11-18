@@ -103,8 +103,8 @@ class HabitWidgetProvider : AppWidgetProvider() {
         if (total == 0) {
             views.setTextViewText(R.id.widget_progress, "No habits today")
             views.setInt(R.id.widget_progress, "setTextColor", labelColor)
-            // Hide all tier views
-            for (i in 0 until 5) {
+            // Hide all tier views (up to 8)
+            for (i in 0 until 8) {
                 val tierId = context.resources.getIdentifier("widget_tier_$i", "id", context.packageName)
                 val leftMarkerId = context.resources.getIdentifier("widget_checkpoint_left_$i", "id", context.packageName)
                 val rightMarkerId = context.resources.getIdentifier("widget_checkpoint_right_$i", "id", context.packageName)
@@ -113,52 +113,65 @@ class HabitWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(rightMarkerId, View.GONE)
             }
         } else {
+            // Clamp total to max 8 tiers
+            val displayTotal = minOf(total, 8)
+            
+            // Update the container's weightSum to match the number of tiers
+            views.setFloat(R.id.widget_tiers_container, "setWeightSum", displayTotal.toFloat())
+
             // Progress label
             views.setTextViewText(R.id.widget_progress, "$completed/$total complete")
             views.setInt(R.id.widget_progress, "setTextColor", labelColor)
 
-            // Update each of the 5 tier slots
-            for (i in 0 until 5) {
+            // Update tier slots based on actual total
+            for (i in 0 until 8) {
                 val tierId = context.resources.getIdentifier("widget_tier_$i", "id", context.packageName)
                 val leftMarkerId = context.resources.getIdentifier("widget_checkpoint_left_$i", "id", context.packageName)
                 val rightMarkerId = context.resources.getIdentifier("widget_checkpoint_right_$i", "id", context.packageName)
 
-                // Show tier views
-                views.setViewVisibility(tierId, View.VISIBLE)
-                views.setViewVisibility(leftMarkerId, View.VISIBLE)
-                views.setViewVisibility(rightMarkerId, View.VISIBLE)
+                if (i < displayTotal) {
+                    // Show tier views
+                    views.setViewVisibility(tierId, View.VISIBLE)
+                    views.setViewVisibility(leftMarkerId, View.VISIBLE)
+                    views.setViewVisibility(rightMarkerId, View.VISIBLE)
 
-                val isComplete = i < completed
-                val tierDrawable = if (isComplete) R.drawable.widget_tier_complete else R.drawable.widget_tier_incomplete
+                    val isComplete = i < completed
+                    val tierDrawable = if (isComplete) R.drawable.widget_tier_complete else R.drawable.widget_tier_incomplete
 
-                views.setInt(tierId, "setBackgroundResource", tierDrawable)
-                views.setInt(leftMarkerId, "setBackgroundResource", checkpointDrawable)
-                views.setInt(rightMarkerId, "setBackgroundResource", checkpointDrawable)
+                    views.setInt(tierId, "setBackgroundResource", tierDrawable)
+                    views.setInt(leftMarkerId, "setBackgroundResource", checkpointDrawable)
+                    views.setInt(rightMarkerId, "setBackgroundResource", checkpointDrawable)
 
-                // Click listener for toggling (only if there's an item at this position)
-                if (i < total) {
-                    try {
-                        val itemsArray = org.json.JSONArray(itemsJson)
-                        if (i < itemsArray.length()) {
-                            val item = itemsArray.getJSONObject(i)
-                            val itemId = item.optString("id", "")
-                            val itemDone = item.optBoolean("done", false)
-                            val date = org.json.JSONObject(json).optString("date", "")
+                    // Click listener for toggling (only if there's an item at this position)
+                    if (i < total) {
+                        try {
+                            val itemsArray = org.json.JSONArray(itemsJson)
+                            if (i < itemsArray.length()) {
+                                val item = itemsArray.getJSONObject(i)
+                                val itemId = item.optString("id", "")
+                                val itemDone = item.optBoolean("done", false)
+                                val date = org.json.JSONObject(json).optString("date", "")
 
-                            if (itemId.isNotEmpty()) {
-                                val toggleIntent = Intent("WIDGET_TOGGLE_ITEM")
-                                    .putExtra("item_id", itemId)
-                                    .putExtra("date", date)
-                                val pendingIntent = android.app.PendingIntent.getBroadcast(
-                                    context, i, toggleIntent,
-                                    android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
-                                )
-                                views.setOnClickPendingIntent(tierId, pendingIntent)
+                                if (itemId.isNotEmpty()) {
+                                    val toggleIntent = Intent("WIDGET_TOGGLE_ITEM")
+                                        .putExtra("item_id", itemId)
+                                        .putExtra("date", date)
+                                    val pendingIntent = android.app.PendingIntent.getBroadcast(
+                                        context, i, toggleIntent,
+                                        android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+                                    )
+                                    views.setOnClickPendingIntent(tierId, pendingIntent)
+                                }
                             }
+                        } catch (e: Exception) {
+                            // Ignore click setup errors
                         }
-                    } catch (e: Exception) {
-                        // Ignore click setup errors
                     }
+                } else {
+                    // Hide unused tiers
+                    views.setViewVisibility(tierId, View.GONE)
+                    views.setViewVisibility(leftMarkerId, View.GONE)
+                    views.setViewVisibility(rightMarkerId, View.GONE)
                 }
             }
         }
