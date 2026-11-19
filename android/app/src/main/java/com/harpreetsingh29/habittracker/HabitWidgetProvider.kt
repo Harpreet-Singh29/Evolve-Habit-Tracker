@@ -7,16 +7,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
-import android.graphics.Color
+import android.graphics.Bitmap
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import org.json.JSONObject
 
 /**
- * Home screen widget showing a mountain with checkpoint tiers for today's habits/tasks.
- * Completed tiers (bottom) are pure black; incomplete tiers (top) are soft gray.
- * Data comes from SharedPreferences written by the main app via @JavascriptInterface.
+ * Home screen widget: a mountain whose filled height is today's habit/task
+ * progress, with checkpoint markers along a trail and an "M/N complete" label.
+ *
+ * All artwork is rendered into a Bitmap by HabitWidgetArt (RemoteViews cannot
+ * draw) and pushed with setImageViewBitmap. Tapping the card opens the app.
  */
 class HabitWidgetProvider : AppWidgetProvider() {
 
@@ -25,7 +27,11 @@ class HabitWidgetProvider : AppWidgetProvider() {
         private const val PREFS_NAME = "habit_widget_cache"
         private const val KEY_TODAY_DATA = "today_data"
 
-        /** Call this from MainActivity after the web layer writes new data */
+        /** Strong reference so the launcher can still draw the last render. */
+        @Volatile
+        private var lastArt: Bitmap? = null
+
+        /** Call this from MainActivity after the web layer writes new data. */
         @JvmStatic
         fun updateWidget(context: Context, manager: AppWidgetManager, id: Int) {
             val instance = HabitWidgetProvider()
@@ -48,137 +54,73 @@ class HabitWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == "WIDGET_TOGGLE_ITEM") {
-            val itemId = intent.getStringExtra("item_id") ?: return
-            val date = intent.getStringExtra("date") ?: return
-            // Broadcast to main app to toggle the item
-            val toggleIntent = Intent("com.harpreetsingh29.habittracker.WIDGET_TOGGLE")
-                .putExtra("item_id", itemId)
-                .putExtra("date", date)
-                .setPackage(context.packageName)
-            context.sendBroadcast(toggleIntent)
-            return
-        }
-        super.onReceive(context, intent)
-    }
-
     private fun updateWidgetInternal(context: Context, manager: AppWidgetManager, id: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val json = prefs.getString(KEY_TODAY_DATA, "{}") ?: "{}"
 
         var total = 0
         var completed = 0
-        var itemsJson = ""
 
         try {
             val obj = JSONObject(json)
             total = obj.optInt("total", 0)
             completed = obj.optInt("completed", 0)
-            itemsJson = obj.optString("items", "[]")
         } catch (e: Exception) {
             Log.e(TAG, "Error parsing JSON", e)
         }
 
-        // Detect current theme (light/dark)
-        val isDarkTheme = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        
-        val bgColor = if (isDarkTheme) Color.parseColor("#1A1A1A") else Color.parseColor("#F5F5F5")
-        val labelColor = if (isDarkTheme) Color.WHITE else Color.BLACK
-        val checkpointDrawable = if (isDarkTheme) R.drawable.widget_checkpoint else R.drawable.widget_checkpoint
+        val (wPx, hPx) = widgetSizePx(context, manager, id)
+        val isDarkTheme =
+            (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
 
-        val views = RemoteViews(context.packageName, R.layout.habit_widget_layout)
-
-        // Set theme-aware background
-        views.setInt(R.id.widget_root, "setBackgroundColor", bgColor)
-
-        // Handle empty state (no habits/tasks for today)
-        if (total == 0) {
-            views.setTextViewText(R.id.widget_progress, "No habits today")
-            views.setInt(R.id.widget_progress, "setTextColor", labelColor)
-            // Hide all tier views (up to 8)
-            for (i in 0 until 8) {
-                val tierId = context.resources.getIdentifier("widget_tier_$i", "id", context.packageName)
-                val leftMarkerId = context.resources.getIdentifier("widget_checkpoint_left_$i", "id", context.packageName)
-                val rightMarkerId = context.resources.getIdentifier("widget_checkpoint_right_$i", "id", context.packageName)
-                views.setViewVisibility(tierId, View.GONE)
-                views.setViewVisibility(leftMarkerId, View.GONE)
-                views.setViewVisibility(rightMarkerId, View.GONE)
-            }
-        } else {
-            // Clamp total to max 8 tiers
-            val displayTotal = minOf(total, 8)
-            
-            // Update the container's weightSum to match the number of tiers
-            views.setFloat(R.id.widget_tiers_container, "setWeightSum", displayTotal.toFloat())
-
-            // Progress label
-            views.setTextViewText(R.id.widget_progress, "$completed/$total complete")
-            views.setInt(R.id.widget_progress, "setTextColor", labelColor)
-
-            // Update tier slots based on actual total
-            for (i in 0 until 8) {
-                val tierId = context.resources.getIdentifier("widget_tier_$i", "id", context.packageName)
-                val leftMarkerId = context.resources.getIdentifier("widget_checkpoint_left_$i", "id", context.packageName)
-                val rightMarkerId = context.resources.getIdentifier("widget_checkpoint_right_$i", "id", context.packageName)
-
-                if (i < displayTotal) {
-                    // Show tier views
-                    views.setViewVisibility(tierId, View.VISIBLE)
-                    views.setViewVisibility(leftMarkerId, View.VISIBLE)
-                    views.setViewVisibility(rightMarkerId, View.VISIBLE)
-
-                    val isComplete = i < completed
-                    val tierDrawable = if (isComplete) R.drawable.widget_tier_complete else R.drawable.widget_tier_incomplete
-
-                    views.setInt(tierId, "setBackgroundResource", tierDrawable)
-                    views.setInt(leftMarkerId, "setBackgroundResource", checkpointDrawable)
-                    views.setInt(rightMarkerId, "setBackgroundResource", checkpointDrawable)
-
-                    // Click listener for toggling (only if there's an item at this position)
-                    if (i < total) {
-                        try {
-                            val itemsArray = org.json.JSONArray(itemsJson)
-                            if (i < itemsArray.length()) {
-                                val item = itemsArray.getJSONObject(i)
-                                val itemId = item.optString("id", "")
-                                val date = org.json.JSONObject(json).optString("date", "")
-
-                                if (itemId.isNotEmpty()) {
-                                    val toggleIntent = Intent("WIDGET_TOGGLE_ITEM")
-                                        .putExtra("item_id", itemId)
-                                        .putExtra("date", date)
-                                    val pendingIntent = android.app.PendingIntent.getBroadcast(
-                                        context, i, toggleIntent,
-                                        android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
-                                    )
-                                    views.setOnClickPendingIntent(tierId, pendingIntent)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            // Ignore click setup errors
-                        }
-                    }
-                } else {
-                    // Hide unused tiers
-                    views.setViewVisibility(tierId, View.GONE)
-                    views.setViewVisibility(leftMarkerId, View.GONE)
-                    views.setViewVisibility(rightMarkerId, View.GONE)
-                }
-            }
+        val art: Bitmap = try {
+            HabitWidgetArt.render(wPx, hPx, total, completed, isDarkTheme)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error rendering widget art", e)
+            HabitWidgetArt.render(wPx, hPx, 0, 0, isDarkTheme)
         }
 
-        // Tap mountain → open app
+        val views = RemoteViews(context.packageName, R.layout.habit_widget_layout)
+        // Keep a strong reference: a launcher that pulls the bitmap into another
+        // process must not find it already collected.
+        lastArt = art
+        views.setImageViewBitmap(R.id.widget_art, art)
+
+        if (total > 0) {
+            views.setViewVisibility(R.id.widget_progress, View.GONE)
+        } else {
+            views.setViewVisibility(R.id.widget_progress, View.VISIBLE)
+            views.setTextViewText(R.id.widget_progress, "No habits today")
+        }
+
+        // RemoteViews cannot position per-marker tap targets (no margin support),
+        // and 20dp markers are below the 48dp touch-target minimum anyway, so a
+        // single tap opens the app where the item can be completed properly.
         val openIntent = Intent(context, MainActivity::class.java).apply {
             action = Intent.ACTION_MAIN
             addCategory(Intent.CATEGORY_LAUNCHER)
         }
-        val openPendingIntent = android.app.PendingIntent.getActivity(
+        val openPi = android.app.PendingIntent.getActivity(
             context, 0, openIntent,
             android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
         )
-        views.setOnClickPendingIntent(R.id.widget_root, openPendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_art, openPi)
 
         manager.updateAppWidget(id, views)
+    }
+
+    private fun widgetSizePx(context: Context, manager: AppWidgetManager, id: Int): Pair<Int, Int> {
+        val density = context.resources.displayMetrics.density
+        val opts = manager.getAppWidgetOptions(id)
+        val wDp = listOf(
+            opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0),
+            opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0),
+        ).firstOrNull { it > 0 } ?: 250
+        val hDp = listOf(
+            opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0),
+            opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0),
+        ).firstOrNull { it > 0 } ?: 110
+        return Pair((wDp * density).toInt().coerceAtLeast(1), (hDp * density).toInt().coerceAtLeast(1))
     }
 }

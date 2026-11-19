@@ -1,273 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/widget_bg_dark"
-    android:padding="12dp">
+    android:background="@android:color/transparent">
 
-    <!-- Mountain container (scales with widget height) -->
-    <FrameLayout
+    <!-- The whole scene (card, mountain, trail, checkpoints, labels) is rendered
+         into a bitmap and pushed here, because RemoteViews has no canvas access. -->
+    <ImageView
+        android:id="@+id/widget_art"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="4dp">
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:contentDescription="@string/widget_description" />
 
-        <!-- Mountain background vector (triangle with tier divider lines) -->
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/widget_mountain_bg"
-            android:scaleType="fitXY"
-            android:contentDescription="@null" />
-
-        <!-- Dynamic tier overlays (up to 8 max, shown based on total) -->
-        <LinearLayout
-            android:id="@+id/widget_tiers_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:weightSum="8">
-
-            <!-- Tier 0 (bottom = first completed) -->
-            <FrameLayout
-                android:id="@+id/widget_tier_0"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/widget_checkpoint_left_0"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-                <ImageView
-                    android:id="@+id/widget_checkpoint_right_0"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-            </FrameLayout>
-
-            <!-- Tier 1 -->
-            <FrameLayout
-                android:id="@+id/widget_tier_1"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/widget_checkpoint_left_1"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-                <ImageView
-                    android:id="@+id/widget_checkpoint_right_1"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-            </FrameLayout>
-
-            <!-- Tier 2 -->
-            <FrameLayout
-                android:id="@+id/widget_tier_2"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/widget_checkpoint_left_2"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-                <ImageView
-                    android:id="@+id/widget_checkpoint_right_2"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-            </FrameLayout>
-
-            <!-- Tier 3 -->
-            <FrameLayout
-                android:id="@+id/widget_tier_3"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/widget_checkpoint_left_3"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-                <ImageView
-                    android:id="@+id/widget_checkpoint_right_3"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-            </FrameLayout>
-
-            <!-- Tier 4 -->
-            <FrameLayout
-                android:id="@+id/widget_tier_4"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/widget_checkpoint_left_4"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-                <ImageView
-                    android:id="@+id/widget_checkpoint_right_4"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-            </FrameLayout>
-
-            <!-- Tier 5 -->
-            <FrameLayout
-                android:id="@+id/widget_tier_5"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/widget_checkpoint_left_5"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-                <ImageView
-                    android:id="@+id/widget_checkpoint_right_5"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-            </FrameLayout>
-
-            <!-- Tier 6 -->
-            <FrameLayout
-                android:id="@+id/widget_tier_6"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/widget_checkpoint_left_6"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-                <ImageView
-                    android:id="@+id/widget_checkpoint_right_6"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-            </FrameLayout>
-
-            <!-- Tier 7 (top, max 8 tiers) -->
-            <FrameLayout
-                android:id="@+id/widget_tier_7"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/widget_checkpoint_left_7"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|start"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-                <ImageView
-                    android:id="@+id/widget_checkpoint_right_7"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/widget_checkpoint"
-                    android:contentDescription="@null" />
-            </FrameLayout>
-
-        </LinearLayout>
-
-    </FrameLayout>
-
-    <!-- Progress label -->
+    <!-- Kept for the "no items" label fallback; the bitmap draws the real text. -->
     <TextView
         android:id="@+id/widget_progress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="6dp"
         android:gravity="center"
         android:textSize="12sp"
         android:textColor="@color/widget_label_dark"
-        android:text="0/0 complete"
-        android:fontFamily="sans-serif-medium" />
+        android:visibility="gone" />
 
-</LinearLayout>
+</FrameLayout>

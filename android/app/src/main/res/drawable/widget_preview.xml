@@ -4,89 +4,79 @@
     android:height="110dp"
     android:viewportWidth="250"
     android:viewportHeight="110">
-    <!-- Widget preview for the picker: mountain with 2/5 complete -->
-    
-    <!-- Background -->
+
+    <!-- Widget picker preview, mirroring the reference art:
+         dark card, faceted mountain, black completed area, soft-gray
+         incomplete area, winding trail with checkpoints, "2/5 complete". -->
+
     <path
-        android:fillColor="#1A1A1A"
-        android:pathData="M0,0h250v110H0z" />
-    
-    <!-- Mountain silhouette with tiers -->
-    <!-- Tier 0 (complete - bottom) -->
+        android:fillColor="#1C1C1E"
+        android:pathData="M14,0 L236,0 Q250,0 250,14 L250,96 Q250,110 236,110 L14,110 Q0,110 0,96 L0,14 Q0,0 14,0 Z" />
+
+    <!-- mountain: soft gray body -->
+    <path
+        android:fillColor="#9CA3AF"
+        android:pathData="M168,16 L238,96 L98,96 Z" />
+    <!-- facet shading -->
+    <path
+        android:fillColor="#8B9099"
+        android:pathData="M168,16 L150,96 L98,96 Z" />
+    <path
+        android:fillColor="#8B9099"
+        android:pathData="M168,16 L238,96 L186,96 Z" />
+    <!-- completed area (pure black) below the 2/5 line -->
     <path
         android:fillColor="#000000"
-        android:pathData="M20,88 L230,88 L160,110 L20,88 Z" />
-    <!-- Tier 1 (complete) -->
+        android:pathData="M98,64 L238,64 L238,96 L98,96 Z" />
     <path
         android:fillColor="#000000"
-        android:pathData="M28,66 L222,66 L160,88 L28,66 Z" />
-    <!-- Tier 2 (incomplete) -->
+        android:pathData="M168,64 L238,96 L98,96 Z" />
+
+    <!-- foreground ridge -->
     <path
-        android:fillColor="#6B6B6B"
-        android:pathData="M36,44 L214,44 L160,66 L36,44 Z" />
-    <!-- Tier 3 (incomplete) -->
+        android:fillColor="#000000"
+        android:pathData="M0,110 L0,98 Q40,84 84,98 Q116,110 150,98 Q196,88 250,102 L250,110 Z" />
+
+    <!-- winding trail -->
     <path
-        android:fillColor="#6B6B6B"
-        android:pathData="M44,22 L206,22 L160,44 L44,22 Z" />
-    <!-- Tier 4 (incomplete - top) -->
-    <path
-        android:fillColor="#6B6B6B"
-        android:pathData="M52,0 L198,0 L160,22 L52,0 Z" />
-    
-    <!-- Checkpoint markers -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
+        android:strokeColor="#C8C8CD"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
         android:fillColor="@android:color/transparent"
-        android:pathData="M20,99a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M230,99a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M28,77a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M222,77a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M36,55a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M214,55a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M44,33a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M206,33a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M52,11a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M198,11a8,8 0 1,1 0,16a8,8 0 1,1 0,-16" />
-    
-    <!-- Progress label -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M100,115 L150,115 L150,130 L100,130 Z" />
+        android:pathData="M116,92 Q130,70 142,62 Q152,54 158,44 Q164,34 168,24" />
+
+    <!-- checkpoints: first two completed (check), rest plain -->
+    <path android:fillColor="#F2F2F7" android:pathData="M116,92 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+    <path android:strokeColor="#1C1C1E" android:strokeWidth="2.4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M112,92 L115,95 L121,88" />
+
+    <path android:fillColor="#F2F2F7" android:pathData="M136,70 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+    <path android:strokeColor="#1C1C1E" android:strokeWidth="2.4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M132,70 L135,73 L141,66" />
+
+    <path android:fillColor="#B8FFFFFF" android:pathData="M156,44 m-6.5,0 a6.5,6.5 0 1,0 13,0 a6.5,6.5 0 1,0 -13,0" />
+    <path android:fillColor="#B8FFFFFF" android:pathData="M161,26 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+    <path android:fillColor="#B8FFFFFF" android:pathData="M168,16 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+
+    <!-- labels: the real text is drawn at runtime into the bitmap. VectorDrawable
+         cannot render type, so the picker thumbnail approximates "2/5" with
+         simple glyph blocks. -->
+
+    <!-- "2" -->
+    <path android:fillColor="#FFFFFF" android:pathData="M18,28 h22 v3.5 h-22 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M36.5,31.5 h3.5 v6.5 h-3.5 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M18,38 h22 v3.5 h-22 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M18,41.5 h3.5 v6.5 h-3.5 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M18,48 h22 v3.5 h-22 z" />
+
+    <!-- "/" -->
+    <path android:fillColor="#FFFFFF" android:pathData="M45,29 h3.5 l-3.5,22 h-3.5 z" />
+
+    <!-- "5" -->
+    <path android:fillColor="#FFFFFF" android:pathData="M54,28 h22 v3.5 h-22 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,31.5 h3.5 v6.5 h-3.5 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,38 h22 v3.5 h-22 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M72.5,41.5 h3.5 v6.5 h-3.5 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,48 h22 v3.5 h-22 z" />
+
+    <!-- "complete" -->
+    <path android:fillColor="#9CA3AF" android:pathData="M18,62 h60 v7 h-60 z" />
 </vector>
